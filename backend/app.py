@@ -13,7 +13,17 @@ def create_app(conn, coda):
     @app.post("/message")
     def message():
         corpo = request.get_json(silent=True) or {}
-        testo = (corpo.get("text") or "").strip()
+
+        # Validate that corpo is a dict
+        if not isinstance(corpo, dict):
+            return jsonify({"error": 'Il campo "text" è obbligatorio'}), 400
+
+        # Validate that text is a string
+        text_value = corpo.get("text")
+        if not isinstance(text_value, str):
+            return jsonify({"error": 'Il campo "text" è obbligatorio'}), 400
+
+        testo = text_value.strip()
 
         if not testo:
             return jsonify({"error": 'Il campo "text" è obbligatorio'}), 400

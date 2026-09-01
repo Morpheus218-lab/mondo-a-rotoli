@@ -41,6 +41,26 @@ def test_post_message_senza_testo_ritorna_400(client):
     assert coda.empty()
 
 
+def test_post_message_corpo_non_dict_ritorna_400(client):
+    """Test that a JSON body that isn't a dict (e.g., a bare array) returns 400, not 500."""
+    test_client, conn, coda = client
+
+    risposta = test_client.post("/message", json=[1, 2, 3])
+
+    assert risposta.status_code == 400
+    assert coda.empty()
+
+
+def test_post_message_text_non_string_ritorna_400(client):
+    """Test that a non-string text value (e.g., integer) returns 400, not 500."""
+    test_client, conn, coda = client
+
+    risposta = test_client.post("/message", json={"text": 123})
+
+    assert risposta.status_code == 400
+    assert coda.empty()
+
+
 def test_get_history_ritorna_solo_delivered(client):
     test_client, conn, coda = client
     id1, _ = db.insert_message(conn, "uno")
