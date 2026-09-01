@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>txtinstallazione — scrivi il prossimo prompt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5EFE6;
+    --card: #FFFFFF;
+    --ink: #201A17;
+    --ink-soft: #6B615A;
+    --red: #C81E1E;
+    --red-dark: #931414;
+    --red-pale: #FBEAE6;
+    --line: #E4D9C8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(32,26,23,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .eyebrow {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--red);
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .concept {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    text-align: justify;
+    margin: 0 auto 26px;
+    max-width: 440px;
+  }
+
+  .pagina {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .strip {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--card);
+    padding: 36px 30px 30px;
+    box-shadow: 0 18px 40px rgba(32,20,14,0.12);
+    position: relative;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    top: -11px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background:
+      linear-gradient(135deg, var(--card) 50%, transparent 50%) 0 0,
+      linear-gradient(-135deg, var(--card) 50%, transparent 50%) 0 0;
+    background-size: 16px 16px;
+    background-repeat: repeat-x;
+    filter: drop-shadow(0 -2px 3px rgba(32,20,14,0.08));
+  }
+
+  /* --- ultimo messaggio: mini ricevuta --- */
+  .ultimo {
+    border: 1px dashed var(--line);
+    padding: 16px 16px 14px;
+    margin-bottom: 22px;
+    display: none;
+  }
+
+  .ultimo.visibile { display: block; }
+
+  .ultimo-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .ultimo-quando {
+    color: var(--ink-soft);
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .ultimo-testo {
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .ultimo-vuoto {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .prossimo-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 13px 14px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15px;
+    font-family: 'Space Mono', monospace;
+    resize: vertical;
+    margin-bottom: 16px;
+  }
+
+  textarea::placeholder { color: #A99C8E; }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--red);
+  }
+
+  .contatore {
+    text-align: right;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin: -10px 0 16px;
+  }
+
+  .contatore.limite {
+    color: var(--red);
+  }
+
+  button#invia {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    background: var(--ink);
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button#invia:hover:not(:disabled) { background: var(--red); }
+
+  button#invia:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .status {
+    margin-top: 14px;
+    padding: 11px 12px;
+    font-size: 13px;
+    display: none;
+    border-left: 3px solid transparent;
+  }
+
+  .status.success {
+    display: block;
+    background: var(--red-pale);
+    border-left-color: var(--red);
+    color: var(--red-dark);
+  }
+
+  .status.error {
+    display: block;
+    background: #FBEAEA;
+    border-left-color: #931414;
+    color: #931414;
+  }
+
+  .footer-riga {
+    text-align: center;
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 1px;
+    margin-top: 16px;
+  }
+
+  /* --- storico messaggi --- */
+  .storico {
+    width: 100%;
+    max-width: 440px;
+    margin: 34px auto 0;
+  }
+
+  .storico-titolo {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--red);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .voce-storico {
+    background: var(--card);
+    border: 1px dashed var(--line);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .voce-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .voce-quando {
+    color: var(--ink-soft);
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .voce-testo {
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .storico-vuoto {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 10px 0;
+  }
+
+  .torna-su {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(32,20,14,0.25);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+
+  .torna-su.visibile { display: flex; }
+  .torna-su:hover { background: var(--red); }
+</style>
+</head>
+<body>
+  <div class="pagina">
+    <div class="eyebrow">TXT INSTALLAZIONE</div>
+    <p class="concept">Quello che scrivi qui attraversa la rete e arriva direttamente nel nostro studio a Napoli, dove viene immediatamente stampato. Il bit diventa atomo, la distanza si annulla: un piccolo atto di entanglement tra te, noi e lo spazio.</p>
+    <div class="strip">
+    <div class="card">
+      <div class="ultimo" id="ultimo">
+        <div class="ultimo-label">
+          <span>PROMPT:</span>
+          <span class="ultimo-quando" id="ultimoQuando"></span>
+        </div>
+        <div class="ultimo-testo" id="ultimoTesto"></div>
+      </div>
+
+      <div class="prossimo-label">SCRIVI IL TUO PROSSIMO PROMPT:</div>
+      <textarea id="testo" maxlength="100" placeholder="Scrivi qui il tuo messaggio..."></textarea>
+      <div class="contatore" id="contatore">0/100</div>
+      <button id="invia">Stampa</button>
+      <div id="status" class="status"></div>
+    </div>
+    <div class="footer-riga">STAMPATO SU CARTA</div>
+    </div>
+  </div>
+
+  <div class="storico">
+    <div class="storico-titolo">MESSAGGI PRECEDENTI</div>
+    <div id="storicoLista"></div>
+  </div>
+
+  <button class="torna-su" id="tornaSu" aria-label="Torna su">↑</button>
+
+  <script>
+    const API_URL = 'https://txtinstallazione.info-cuoredinapoli.workers.dev';
+
+    const textarea = document.getElementById('testo');
+    const bottone = document.getElementById('invia');
+    const status = document.getElementById('status');
+    const ultimoBox = document.getElementById('ultimo');
+    const ultimoTesto = document.getElementById('ultimoTesto');
+    const ultimoQuando = document.getElementById('ultimoQuando');
+    const contatore = document.getElementById('contatore');
+    const storicoLista = document.getElementById('storicoLista');
+
+    function aggiornaContatore() {
+      const n = textarea.value.length;
+      contatore.textContent = `${n}/100`;
+      contatore.classList.toggle('limite', n >= 100);
+    }
+
+    textarea.addEventListener('input', aggiornaContatore);
+
+    function tempoFa(iso) {
+      const diffMs = Date.now() - new Date(iso).getTime();
+      const min = Math.floor(diffMs / 60000);
+      if (min < 1) return 'proprio ora';
+      if (min < 60) return `${min} min fa`;
+      const ore = Math.floor(min / 60);
+      if (ore < 24) return `${ore} h fa`;
+      return `${Math.floor(ore / 24)} g fa`;
+    }
+
+    function creaVoceStorico(msg) {
+      const div = document.createElement('div');
+      div.className = 'voce-storico';
+      div.innerHTML = `
+        <div class="voce-label">
+          <span>PROMPT:</span>
+          <span class="voce-quando"></span>
+        </div>
+        <div class="voce-testo"></div>
+      `;
+      div.querySelector('.voce-quando').textContent = tempoFa(msg.created_at);
+      div.querySelector('.voce-testo').textContent = msg.text;
+      return div;
+    }
+
+    let offsetStorico = 0;
+    const BATCH_STORICO = 10;
+    let caricamentoInCorso = false;
+    let tuttoCaricato = false;
+
+    async function caricaBatchStorico() {
+      if (caricamentoInCorso || tuttoCaricato) return;
+      caricamentoInCorso = true;
+
+      try {
+        const risposta = await fetch(`${API_URL}/message/history?limit=${BATCH_STORICO}&offset=${offsetStorico}`);
+        if (!risposta.ok) return;
+        const dati = await risposta.json();
+        const messaggi = dati.messaggi || [];
+
+        if (offsetStorico === 0) {
+          storicoLista.innerHTML = '';
+          const primo = messaggi[0];
+          if (primo) {
+            ultimoTesto.textContent = primo.text;
+            ultimoQuando.textContent = tempoFa(primo.created_at);
+            ultimoBox.classList.add('visibile');
+          } else {
+            storicoLista.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
+          }
+        }
+
+        messaggi.forEach(m => storicoLista.appendChild(creaVoceStorico(m)));
+
+        offsetStorico += messaggi.length;
+        if (messaggi.length < BATCH_STORICO) {
+          tuttoCaricato = true;
+        }
+      } catch (errore) {
+        // Se non arriva, il sito resta comunque perfettamente utilizzabile
+      } finally {
+        caricamentoInCorso = false;
+      }
+    }
+
+    caricaBatchStorico();
+
+    const tornaSu = document.getElementById('tornaSu');
+    window.addEventListener('scroll', () => {
+      tornaSu.classList.toggle('visibile', window.scrollY > 400);
+
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400) {
+        caricaBatchStorico();
+      }
+    });
+    tornaSu.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    bottone.addEventListener('click', async () => {
+      const testo = textarea.value.trim();
+
+      if (!testo) {
+        mostraStatus('Scrivi qualcosa prima di stampare.', 'error');
+        return;
+      }
+
+      bottone.disabled = true;
+      bottone.textContent = 'Stampa in corso...';
+
+      try {
+        const risposta = await fetch(`${API_URL}/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: testo })
+        });
+
+        if (!risposta.ok) {
+          throw new Error('Errore del server');
+        }
+
+        mostraStatus('Messaggio inviato: uscirà stampato a breve.', 'success');
+        textarea.value = '';
+        aggiornaContatore();
+
+        ultimoTesto.textContent = testo;
+        ultimoQuando.textContent = 'proprio ora';
+        ultimoBox.classList.add('visibile');
+
+        storicoLista.prepend(creaVoceStorico({ text: testo, created_at: new Date().toISOString() }));
+      } catch (errore) {
+        mostraStatus('Errore durante l\'invio. Riprova.', 'error');
+      } finally {
+        bottone.disabled = false;
+        bottone.textContent = 'Stampa';
+      }
+    });
+
+    function mostraStatus(messaggio, tipo) {
+      status.textContent = messaggio;
+      status.className = `status ${tipo}`;
+      setTimeout(() => {
+        status.className = 'status';
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
+
