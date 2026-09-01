@@ -1,20 +1,22 @@
+import logging
+import os
+import threading
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 import db
-
-import os
-import threading
-
 import printer as printer_module
 import worker
 
 DEFAULT_LIMIT = 10
+MAX_TEXT_LENGTH = 1000
 
 
 def create_app(conn, coda):
     app = Flask(__name__)
     CORS(app)
+    app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
 
     @app.post("/message")
     def message():
@@ -34,6 +36,14 @@ def create_app(conn, coda):
         if not testo:
             return jsonify({"error": 'Il campo "text" è obbligatorio'}), 400
 
+        if len(testo) > MAX_TEXT_LENGTH:
+            return (
+                jsonify(
+                    {"error": f'Il campo "text" supera il limite di {MAX_TEXT_LENGTH} caratteri'}
+                ),
+                400,
+            )
+
         message_id, created_at = db.insert_message(conn, testo)
         coda.put(message_id)
 
@@ -43,6 +53,8 @@ def create_app(conn, coda):
     def history():
         limit = request.args.get("limit", default=DEFAULT_LIMIT, type=int)
         offset = request.args.get("offset", default=0, type=int)
+        limit = max(1, min(limit, 100))
+        offset = max(0, offset)
         messaggi = db.get_history(conn, limit, offset)
         return jsonify({"messaggi": messaggi})
 
@@ -58,6 +70,8 @@ def _recupera_pending(conn, coda):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
     conn = db.connect(DB_PATH)
     db.init_db(conn)
 

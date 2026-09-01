@@ -85,3 +85,70 @@ def test_get_history_rispetta_limit_e_offset(client):
 
     messaggi = risposta.get_json()["messaggi"]
     assert [m["text"] for m in messaggi] == ["due"]
+
+
+def test_post_message_testo_oltre_1000_caratteri_ritorna_400(client):
+    test_client, conn, coda = client
+
+    risposta = test_client.post("/message", json={"text": "a" * 1500})
+
+    assert risposta.status_code == 400
+    assert coda.empty()
+
+
+def test_post_message_testo_tra_100_e_150_caratteri_viene_accettato(client):
+    """Comportamento esistente invariato: un messaggio piu' lungo del limite
+    di stampa (100 caratteri, printer.LIMITE_CARATTERI) ma sotto il tetto
+    di storage (1000) deve continuare a essere accettato e salvato — verra'
+    stampato come avviso "troppo lungo" da printer.py, non rifiutato qui."""
+    test_client, conn, coda = client
+
+    risposta = test_client.post("/message", json={"text": "a" * 120})
+
+    assert risposta.status_code == 202
+    corpo = risposta.get_json()
+    riga = db.get_message(conn, corpo["id"])
+    assert riga is not None
+    assert len(riga["text"]) == 120
+
+
+def test_get_history_limit_negativo_e_limitato_a_100(client):
+    """limit=-1 non deve piu' significare "nessun limite" (comportamento
+    nativo di SQLite per LIMIT negativo): va vincolato nell'intervallo
+    [1, 100], quindi al minimo 1, mai l'intera tabella."""
+    test_client, conn, coda = client
+    for i in range(5):
+        message_id, _ = db.insert_message(conn, f"msg-{i}")
+        db.mark_delivered(conn, message_id)
+
+    risposta = test_client.get("/message/history?limit=-1")
+
+    assert risposta.status_code == 200
+    messaggi = risposta.get_json()["messaggi"]
+    assert len(messaggi) <= 100
+
+
+def test_get_history_limit_grande_e_limitato_a_100(client):
+    test_client, conn, coda = client
+    for i in range(150):
+        message_id, _ = db.insert_message(conn, f"msg-{i}")
+        db.mark_delivered(conn, message_id)
+
+    risposta = test_client.get("/message/history?limit=99999")
+
+    assert risposta.status_code == 200
+    messaggi = risposta.get_json()["messaggi"]
+    assert len(messaggi) == 100
+
+
+def test_get_history_offset_negativo_e_trattato_come_zero(client):
+    test_client, conn, coda = client
+    for testo in ["uno", "due", "tre"]:
+        message_id, _ = db.insert_message(conn, testo)
+        db.mark_delivered(conn, message_id)
+
+    risposta_negativo = test_client.get("/message/history?offset=-5")
+    risposta_zero = test_client.get("/message/history?offset=0")
+
+    assert risposta_negativo.status_code == 200
+    assert risposta_negativo.get_json()["messaggi"] == risposta_zero.get_json()["messaggi"]
