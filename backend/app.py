@@ -3,6 +3,12 @@ from flask_cors import CORS
 
 import db
 
+import os
+import threading
+
+import printer as printer_module
+import worker
+
 DEFAULT_LIMIT = 10
 
 
@@ -41,3 +47,28 @@ def create_app(conn, coda):
         return jsonify({"messaggi": messaggi})
 
     return app
+
+
+DB_PATH = os.path.join(os.path.dirname(__file__), "installazione.db")
+
+
+def _recupera_pending(conn, coda):
+    for message_id in db.get_pending_ids(conn):
+        coda.put(message_id)
+
+
+if __name__ == "__main__":
+    conn = db.connect(DB_PATH)
+    db.init_db(conn)
+
+    coda = worker.crea_coda()
+    _recupera_pending(conn, coda)
+
+    stampante = printer_module.get_printer()
+    thread_stampa = threading.Thread(
+        target=worker.worker_loop, args=(coda, conn, stampante), daemon=True
+    )
+    thread_stampa.start()
+
+    app = create_app(conn, coda)
+    app.run(host="0.0.0.0", port=5000)
