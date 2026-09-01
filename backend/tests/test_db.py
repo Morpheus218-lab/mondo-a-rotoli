@@ -1,3 +1,5 @@
+import threading
+
 import db
 
 
@@ -51,3 +53,41 @@ def test_get_history_returns_delivered_desc_with_pagination(tmp_path):
 
     pagina2 = db.get_history(conn, limit=2, offset=2)
     assert [r["text"] for r in pagina2] == ["uno"]
+
+
+def test_insert_message_concorrenti_non_producono_id_duplicati(tmp_path):
+    """Regression test per il bug della connessione sqlite3 condivisa senza
+    lock tra thread: senza il lock in db.py, cursor.lastrowid puo'
+    restituire lo stesso id per insert concorrenti (sqlite3_last_insert_rowid
+    e' globale alla connessione, non thread-local), causando doppie stampe
+    e messaggi persi."""
+    conn = _fresh_conn(tmp_path)
+    n_thread = 8
+    inserti_per_thread = 20
+    ids_lock = threading.Lock()
+    ids_raccolti = []
+    errori = []
+
+    def worker(indice_thread):
+        try:
+            for i in range(inserti_per_thread):
+                message_id, _ = db.insert_message(conn, f"thread-{indice_thread}-msg-{i}")
+                with ids_lock:
+                    ids_raccolti.append(message_id)
+        except Exception as exc:  # pragma: no cover - solo per diagnosi in caso di fallimento
+            errori.append(exc)
+
+    threads = [threading.Thread(target=worker, args=(t,)) for t in range(n_thread)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert errori == []
+
+    totale_attesi = n_thread * inserti_per_thread
+    assert len(ids_raccolti) == totale_attesi
+    assert len(set(ids_raccolti)) == totale_attesi, "sono stati rilevati id duplicati"
+
+    riga_conteggio = conn.execute("SELECT COUNT(*) AS n FROM messaggi").fetchone()
+    assert riga_conteggio["n"] == totale_attesi
