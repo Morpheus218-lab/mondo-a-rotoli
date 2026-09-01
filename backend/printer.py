@@ -1,6 +1,9 @@
+import logging
 import os
 
 from PIL import Image, ImageDraw, ImageFont
+
+logger = logging.getLogger(__name__)
 
 FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts", "PressStart2P.ttf")
 FONT_SIZE = 165  # circa 2.6cm di altezza lettere
@@ -41,6 +44,7 @@ def stampa_messaggio(stampante, testo):
         stampante.image(immagine)
         return True
     except Exception:
+        logger.exception("Errore durante la stampa")
         return False
 
 
