@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS messaggi (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
+);
