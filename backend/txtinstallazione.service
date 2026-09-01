@@ -1,0 +1,14 @@
+[Unit]
+Description=txtinstallazione backend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/txtinstallazione
+ExecStart=/home/pi/txtinstallazione/venv/bin/python3 /home/pi/txtinstallazione/app.py
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target

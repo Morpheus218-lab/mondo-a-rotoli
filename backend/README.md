@@ -28,3 +28,21 @@ python3 app.py
 
 Il server ascolta su `0.0.0.0:5000`. L'esposizione verso internet (dominio,
 port forwarding, ecc.) è decisa separatamente — non ancora configurata.
+
+## Esecuzione in produzione (systemd)
+
+L'avvio manuale sopra è utile per sviluppo e debug, ma non sopravvive alla
+chiusura della sessione SSH o a un riavvio del Pi. Per la produzione,
+usare il servizio systemd incluso (`txtinstallazione.service`), che riavvia
+automaticamente il processo in caso di crash — necessario perché il
+recupero dei messaggi `pending` avviene "al prossimo avvio del processo".
+
+```bash
+sudo cp txtinstallazione.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now txtinstallazione
+```
+
+Il file assume che il progetto sia clonato in `/home/pi/txtinstallazione`
+con il virtualenv in `venv/`; adattare i percorsi nel file `.service` se
+diversi. Log del servizio: `journalctl -u txtinstallazione -f`.
