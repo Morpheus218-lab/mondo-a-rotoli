@@ -5,3 +5,4 @@ __pycache__/
 venv/
 .pytest_cache/
 hosting/api/config.php
+backend/.env
