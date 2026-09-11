@@ -41,7 +41,7 @@ Dopo il deploy, verifica nell'ordine (sostituendo l'URL con quello reale):
 2. `curl -i -X POST https://TUO_DOMINIO/api/claim.php -H "X-Api-Key: TUA_CHIAVE"` → `200` con il messaggio appena inviato.
 3. `curl -i -X POST https://TUO_DOMINIO/api/ack.php -H "X-Api-Key: TUA_CHIAVE" -H "Content-Type: application/json" -d '{"id": ID_RESTITUITO_SOPRA}'` → `200 {"ok": true}`.
 4. `curl -i "https://TUO_DOMINIO/api/history.php"` → `200` con il messaggio ora presente.
-5. Ripeti il punto 1 altre 4 volte di fila dallo stesso IP (il messaggio del punto 1 conta già nella finestra): la quinta ripetizione deve rispondere `429`.
+5. Ripeti il punto 1 altre 5 volte di fila dallo stesso IP (il messaggio del punto 1 conta già nella finestra): la quinta ripetizione (sesta chiamata in totale) deve rispondere `429`.
 6. `curl -i -X POST https://TUO_DOMINIO/api/claim.php` (nessun header) → `401`.
 7. `curl -i -X POST https://TUO_DOMINIO/api/ack.php -H "X-Api-Key: sbagliata" -d '{"id": 1}'` → `401`.
 
