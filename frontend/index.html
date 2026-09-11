@@ -445,6 +445,11 @@
           body: JSON.stringify({ text: testo })
         });
 
+        if (risposta.status === 429) {
+          mostraStatus('Hai inviato troppi messaggi. Riprova tra qualche minuto.', 'error');
+          return;
+        }
+
         if (!risposta.ok) {
           throw new Error('Errore del server');
         }

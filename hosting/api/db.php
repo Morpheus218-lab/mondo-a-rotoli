@@ -1,6 +1,14 @@
 <?php
 // hosting/api/db.php
 
+ini_set('display_errors', '0');
+set_exception_handler(function (Throwable $e) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    error_log('Errore non gestito: ' . $e->getMessage());
+    echo json_encode(['error' => 'Errore interno']);
+});
+
 function get_config(): array
 {
     $config_path = __DIR__ . '/config.php';
