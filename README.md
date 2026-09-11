@@ -4,6 +4,47 @@ Installazione interattiva: una pagina web dove le persone scrivono un
 messaggio, che viene stampato su carta da una stampante USB collegata a un
 Raspberry Pi Zero.
 
+## Come far partire l'installazione
+
+Per accendere tutto servono due cose, in ordine: **mettere online il sito**
+e **accendere il Raspberry Pi con la stampante collegata**.
+
+### 1. Metti online il sito
+
+- Carica il contenuto delle cartelle `frontend/` e `hosting/api/` sul tuo
+  hosting (dominio unico, es. `mondoarotoli.cuoredinapoli.net`).
+- Crea un database MySQL vuoto e importa lo schema che trovi in
+  `hosting/schema.sql` (con phpMyAdmin basta aprirlo e premere "Esegui").
+- Copia il file `hosting/api/config.php.example`, rinomina la copia in
+  `config.php` e scrivici dentro le credenziali del database e una
+  password segreta a tua scelta (è la "chiave" che userà anche il Pi per
+  parlare col sito).
+- Apri il sito nel browser: deve comparire la pagina con il campo per
+  scrivere il messaggio.
+
+Tutti i comandi passo per passo sono in [`hosting/README.md`](hosting/README.md).
+
+### 2. Accendi il Raspberry Pi
+
+- Collega la stampante al Pi via USB e controlla che ci sia carta.
+- Sul Pi, crea un file chiamato `.env` dentro la cartella `backend/` e
+  scrivici l'indirizzo del sito e la stessa password segreta scelta al
+  punto 1.
+- Avvia il programma con `python3 poller.py`, oppure — meglio, così
+  riparte da solo a ogni riavvio del Pi — attiva il servizio automatico
+  descritto nel README del backend.
+- Da quel momento il Pi controlla il sito ogni 5 secondi: appena qualcuno
+  scrive un messaggio, esce stampato in automatico.
+
+Tutti i comandi passo per passo sono in [`backend/README.md`](backend/README.md).
+
+### 3. Prova che funzioni
+
+Scrivi un messaggio di prova dal sito: entro 5 secondi deve uscire dalla
+stampante. Se non succede, controlla nell'ordine: il Pi è acceso ed è
+connesso a internet, la stampante è collegata e ha carta, la password nel
+file `.env` del Pi è identica a quella scritta in `config.php` sul sito.
+
 ## Come funziona
 
 Il sistema è diviso in tre parti, che girano su due macchine diverse:
