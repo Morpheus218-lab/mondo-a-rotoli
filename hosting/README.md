@@ -20,15 +20,18 @@ condiviso (es. `mondoarotoli.cuoredinapoli.net`). Vedi la spec completa in
 
 ## Endpoint pubblici
 
-- `POST /api/message.php` — body `{"text": "..."}` → `202`/`400`/`429`.
+- `POST /api/message.php` — body `{"text": "..."}` → `202`/`400`/`413`/`429`.
 - `GET /api/history.php?limit=&offset=` → `200 {"messaggi": [...]}`.
 
 ## Endpoint privati (richiedono header `X-Api-Key`)
 
 - `POST /api/claim.php` → `200 {"id", "text"}` o `204` se non c'è nulla da
   stampare, `401` senza chiave valida.
-- `POST /api/ack.php` — body `{"id": ...}` → `200 {"ok": true}` o `404` se
-  l'id non è in stato `printing`.
+- `POST /api/ack.php` — body `{"id": ...}` → `200`/`400`/`401`/`404`.
+  - `200`: messaggio confermato e spostato a `delivered`.
+  - `400`: campo `id` mancante o non intero.
+  - `401`: header `X-Api-Key` mancante o invalido.
+  - `404`: messaggio non trovato o non in stato `printing`.
 
 ## Checklist di test manuale end-to-end
 
