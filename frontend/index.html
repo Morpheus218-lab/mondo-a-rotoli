@@ -329,7 +329,7 @@
   <button class="torna-su" id="tornaSu" aria-label="Torna su">↑</button>
 
   <script>
-    const API_URL = 'https://txtinstallazione.info-cuoredinapoli.workers.dev';
+    const API_URL = '/api';
 
     const textarea = document.getElementById('testo');
     const bottone = document.getElementById('invia');
@@ -383,7 +383,7 @@
       caricamentoInCorso = true;
 
       try {
-        const risposta = await fetch(`${API_URL}/message/history?limit=${BATCH_STORICO}&offset=${offsetStorico}`);
+        const risposta = await fetch(`${API_URL}/history.php?limit=${BATCH_STORICO}&offset=${offsetStorico}`);
         if (!risposta.ok) return;
         const dati = await risposta.json();
         const messaggi = dati.messaggi || [];
@@ -439,7 +439,7 @@
       bottone.textContent = 'Stampa in corso...';
 
       try {
-        const risposta = await fetch(`${API_URL}/message`, {
+        const risposta = await fetch(`${API_URL}/message.php`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: testo })
