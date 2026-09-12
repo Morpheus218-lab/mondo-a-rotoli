@@ -31,6 +31,16 @@ pytest -v
 
 ## Avvio sul Raspberry Pi
 
+Prima di installare le dipendenze Python, installa la libreria di sistema
+che serve alla stampa via USB (`pyusb`, incluso in `requirements.txt`, si
+appoggia a questa libreria):
+
+```bash
+sudo apt-get update && sudo apt-get install -y libusb-1.0-0
+```
+
+Poi:
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -38,6 +48,11 @@ pip install -r requirements.txt
 export $(cat .env | xargs)
 python3 poller.py
 ```
+
+Se la stampa fallisce con un errore relativo ai permessi USB (es.
+`USBError: [Errno 13] Access denied`), serve una regola udev che dia
+all'utente `pi` accesso al dispositivo della stampante (vendor/product ID
+definiti in `printer.py`, `Usb(0x0416, 0x5011, ...)`).
 
 ## Esecuzione in produzione (systemd)
 
