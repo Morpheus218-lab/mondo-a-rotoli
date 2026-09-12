@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>txtinstallazione — storico messaggi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5EFE6;
+    --card: #FFFFFF;
+    --ink: #201A17;
+    --ink-soft: #6B615A;
+    --red: #C81E1E;
+    --line: #E4D9C8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(32,26,23,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .eyebrow {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--red);
+    text-align: center;
+    margin-bottom: 14px;
+  }
+
+  .concept {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    text-align: center;
+    margin: 0 auto 26px;
+    max-width: 440px;
+  }
+
+  /* --- storico messaggi --- */
+  .storico {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .storico-titolo {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--red);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .voce-storico {
+    background: var(--card);
+    border: 1px dashed var(--line);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .voce-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .voce-quando {
+    color: var(--ink-soft);
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .voce-testo {
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .storico-vuoto {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 10px 0;
+  }
+
+  .torna-su {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(32,20,14,0.25);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+
+  .torna-su.visibile { display: flex; }
+  .torna-su:hover { background: var(--red); }
+</style>
+</head>
+<body>
+  <div class="eyebrow">TXT INSTALLAZIONE</div>
+  <p class="concept">Tutti i messaggi stampati finora, dal più recente.</p>
+
+  <div class="storico">
+    <div class="storico-titolo">MESSAGGI PRECEDENTI</div>
+    <div id="storicoLista"></div>
+  </div>
+
+  <button class="torna-su" id="tornaSu" aria-label="Torna su">↑</button>
+
+  <script>
+    const API_URL = '/api';
+
+    const storicoLista = document.getElementById('storicoLista');
+
+    function tempoFa(iso) {
+      const diffMs = Date.now() - new Date(iso).getTime();
+      const min = Math.floor(diffMs / 60000);
+      if (min < 1) return 'proprio ora';
+      if (min < 60) return `${min} min fa`;
+      const ore = Math.floor(min / 60);
+      if (ore < 24) return `${ore} h fa`;
+      return `${Math.floor(ore / 24)} g fa`;
+    }
+
+    function creaVoceStorico(msg) {
+      const div = document.createElement('div');
+      div.className = 'voce-storico';
+      div.innerHTML = `
+        <div class="voce-label">
+          <span>PROMPT:</span>
+          <span class="voce-quando"></span>
+        </div>
+        <div class="voce-testo"></div>
+      `;
+      div.querySelector('.voce-quando').textContent = tempoFa(msg.created_at);
+      div.querySelector('.voce-testo').textContent = msg.text;
+      return div;
+    }
+
+    let offsetStorico = 0;
+    const BATCH_STORICO = 10;
+    let caricamentoInCorso = false;
+    let tuttoCaricato = false;
+
+    async function caricaBatchStorico() {
+      if (caricamentoInCorso || tuttoCaricato) return;
+      caricamentoInCorso = true;
+
+      try {
+        const risposta = await fetch(`${API_URL}/history.php?limit=${BATCH_STORICO}&offset=${offsetStorico}`);
+        if (!risposta.ok) return;
+        const dati = await risposta.json();
+        const messaggi = dati.messaggi || [];
+
+        if (offsetStorico === 0 && messaggi.length === 0) {
+          storicoLista.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
+        }
+
+        messaggi.forEach(m => storicoLista.appendChild(creaVoceStorico(m)));
+
+        offsetStorico += messaggi.length;
+        if (messaggi.length < BATCH_STORICO) {
+          tuttoCaricato = true;
+        }
+      } catch (errore) {
+        // Se non arriva, la pagina resta comunque utilizzabile con quanto già caricato
+      } finally {
+        caricamentoInCorso = false;
+      }
+    }
+
+    caricaBatchStorico();
+
+    const tornaSu = document.getElementById('tornaSu');
+    window.addEventListener('scroll', () => {
+      tornaSu.classList.toggle('visibile', window.scrollY > 400);
+
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400) {
+        caricaBatchStorico();
+      }
+    });
+    tornaSu.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>
