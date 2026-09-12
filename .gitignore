@@ -4,3 +4,5 @@ __pycache__/
 .DS_Store
 venv/
 .pytest_cache/
+hosting/api/config.php
+backend/.env
