@@ -62,6 +62,14 @@ CREATE TABLE IF NOT EXISTS like_eventi (
 CREATE INDEX idx_like_eventi_ip_created_at ON like_eventi (ip, created_at);
 ```
 
+Se il database esisteva già anche prima di questo, aggiungi anche l'indice
+usato dal nuovo ordinamento per data (invece che per id) in
+`history.php`:
+
+```sql
+CREATE INDEX idx_messaggi_status_created_at ON messaggi (status, created_at);
+```
+
 Poi aggiungi anche a `config.php` (non nel `.example`, in quello reale
 già sull'hosting) le due nuove righe `rate_limit_max_like` e
 `rate_limit_finestra_like_minuti` — vedi `config.php.example` per i
