@@ -1,0 +1,44 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.057Z",
+        "reason": "verbatim font sizes (7-10px) from the indexV.html file the user supplied and explicitly asked to adopt as index.html; not introduced by the assistant"
+      },
+      {
+        "rule": "justified-text",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.076Z",
+        "reason": "text-align:justify on .concept copied verbatim from the user-supplied indexV.html"
+      },
+      {
+        "rule": "wide-tracking",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.094Z",
+        "reason": "letter-spacing:1px on 9-10px labels copied verbatim from the user-supplied indexV.html"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.116Z",
+        "reason": "same --paper background already used across the project (index.html/storico.html), copied verbatim from the user-supplied indexV.html"
+      }
+    ]
+  }
+}
