@@ -305,6 +305,7 @@
     font-family: 'Space Mono', monospace;
     font-size: 11px;
     color: var(--ink-soft);
+    cursor: pointer;
   }
 
   .like-verticale.attivo { color: var(--red); }
@@ -366,6 +367,7 @@
   .voce-like {
     font-size: 11px;
     color: var(--ink-soft);
+    cursor: pointer;
   }
 
   .voce-like.attivo { color: var(--red); }
@@ -753,6 +755,15 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
       const alDoppioClick = () => gestisciLike(msg, etichetteLike);
       wrapVerticale.addEventListener('dblclick', alDoppioClick);
       voceOrizzontale.addEventListener('dblclick', alDoppioClick);
+
+      // Il cuoricino da solo risponde anche al singolo click, senza dover
+      // fare doppio click su tutta la scheda.
+      const alClickCuore = e => {
+        e.stopPropagation();
+        gestisciLike(msg, etichetteLike);
+      };
+      likeVerticale.addEventListener('click', alClickCuore);
+      likeOrizzontale.addEventListener('click', alClickCuore);
 
       return { verticale: wrapVerticale, orizzontale: voceOrizzontale };
     }
