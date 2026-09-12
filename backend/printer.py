@@ -9,6 +9,11 @@ FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts", "PressStart2P.ttf")
 FONT_SIZE = 165  # circa 2.6cm di altezza lettere
 LARGHEZZA_STAMPA = 576  # larghezza fisica massima della testina, non toccare
 LIMITE_CARATTERI = 100
+# Righe bianche fatte avanzare dopo ogni messaggio: senza, l'ultimo tratto
+# del testo (l'immagine ruotata) resta incastrato vicino alla fessura di
+# uscita della stampante e non e' leggibile finche' non esce il messaggio
+# successivo. Regolare se sulla stampante fisica serve piu'/meno margine.
+RIGHE_AVANZAMENTO_FINALE = 5
 
 
 def crea_immagine_testo(testo, font_size=FONT_SIZE, larghezza_stampa=LARGHEZZA_STAMPA):
@@ -42,6 +47,7 @@ def stampa_messaggio(stampante, testo):
 
         immagine = crea_immagine_testo(testo)
         stampante.image(immagine)
+        stampante.text("\n" * RIGHE_AVANZAMENTO_FINALE)
         return True
     except Exception:
         logger.exception("Errore durante la stampa")

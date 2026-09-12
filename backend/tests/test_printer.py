@@ -33,7 +33,17 @@ def test_stampa_messaggio_normale_invia_intestazione_e_immagine():
 
     assert risultato is True
     nomi_chiamate = [nome for nome, _ in stampante.chiamate]
-    assert nomi_chiamate == ["set", "text", "set", "image"]
+    assert nomi_chiamate == ["set", "text", "set", "image", "text"]
+
+
+def test_stampa_messaggio_fa_avanzare_la_carta_dopo_l_immagine():
+    """Senza questo avanzamento, l'ultimo tratto del messaggio resta
+    incastrato vicino alla fessura di uscita della stampante fisica."""
+    stampante = StampanteFinta()
+    printer.stampa_messaggio(stampante, "ciao mondo")
+
+    testo_finale = stampante.chiamate[-1]
+    assert testo_finale == ("text", "\n" * printer.RIGHE_AVANZAMENTO_FINALE)
 
 
 def test_stampa_messaggio_troppo_lungo_stampa_avviso_invece_del_testo():
