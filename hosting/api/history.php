@@ -14,7 +14,7 @@ $limit = max(1, min($limit, 100));
 $offset = max(0, $offset);
 
 $stmt = $db->prepare(
-    'SELECT id, text, created_at, status FROM messaggi
+    'SELECT id, text, created_at, status, likes FROM messaggi
      WHERE status = "delivered"
      ORDER BY id DESC
      LIMIT :limit OFFSET :offset'
@@ -30,6 +30,7 @@ $messaggi = array_map(function ($riga) {
         'text' => $riga['text'],
         'created_at' => to_iso8601_utc($riga['created_at']),
         'status' => $riga['status'],
+        'likes' => (int) $riga['likes'],
     ];
 }, $righe);
 

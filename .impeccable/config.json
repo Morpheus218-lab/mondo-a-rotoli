@@ -1,0 +1,62 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.057Z",
+        "reason": "verbatim font sizes (7-10px) from the indexV.html file the user supplied and explicitly asked to adopt as index.html; not introduced by the assistant"
+      },
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          "frontend/storico.html"
+        ],
+        "createdAt": "2026-09-12T11:54:26.898Z",
+        "reason": "matches pre-existing font sizes already shipped in frontend/index.html (eyebrow/storico-titolo 9px, voce-label/voce-quando 10px); user explicitly asked for storico.html to reuse index.html's visual style verbatim, same issue already left standing on index.html"
+      },
+      {
+        "rule": "justified-text",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.076Z",
+        "reason": "text-align:justify on .concept copied verbatim from the user-supplied indexV.html"
+      },
+      {
+        "rule": "wide-tracking",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.094Z",
+        "reason": "letter-spacing:1px on 9-10px labels copied verbatim from the user-supplied indexV.html"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "frontend/index.html"
+        ],
+        "createdAt": "2026-09-12T12:10:58.116Z",
+        "reason": "same --paper background already used across the project (index.html/storico.html), copied verbatim from the user-supplied indexV.html"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "frontend/storico.html"
+        ],
+        "createdAt": "2026-09-12T11:54:26.915Z",
+        "reason": "same --paper background variable already used in frontend/index.html; storico.html intentionally reuses that established palette, not a new independent choice"
+      }
+    ]
+  }
+}

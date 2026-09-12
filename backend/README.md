@@ -58,20 +58,20 @@ definiti in `printer.py`, `Usb(0x0416, 0x5011, ...)`).
 
 L'avvio manuale sopra è utile per sviluppo e debug, ma non sopravvive alla
 chiusura della sessione SSH o a un riavvio del Pi. Per la produzione,
-usare il servizio systemd incluso (`txtinstallazione.service`), che legge
+usare il servizio systemd incluso (`mondo-a-rotoli.service`), che legge
 le variabili da `.env` e riavvia automaticamente il processo in caso di
 crash:
 
 ```bash
-sudo cp txtinstallazione.service /etc/systemd/system/
+sudo cp mondo-a-rotoli.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now txtinstallazione
+sudo systemctl enable --now mondo-a-rotoli
 ```
 
-Il file assume che il progetto sia clonato in `/home/pi/txtinstallazione`
-con il virtualenv in `venv/` e il file `.env` nella stessa cartella;
+Il file assume che il repository sia clonato in `/home/pi/mondo-a-rotoli`
+e il file `.env` si trovi in `/home/pi/mondo-a-rotoli/backend/.env`;
 adattare i percorsi nel file `.service` se diversi. Log del servizio:
-`journalctl -u txtinstallazione -f`.
+`journalctl -u mondo-a-rotoli -f`.
 
 ## Messaggi bloccati in stato "printing"
 
