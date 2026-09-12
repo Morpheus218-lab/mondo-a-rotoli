@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "undersized-ui-text",
+        "value": "*",
+        "files": [
+          "frontend/storico.html"
+        ],
+        "createdAt": "2026-09-12T11:54:26.898Z",
+        "reason": "matches pre-existing font sizes already shipped in frontend/index.html (eyebrow/storico-titolo 9px, voce-label/voce-quando 10px); user explicitly asked for storico.html to reuse index.html's visual style verbatim, same issue already left standing on index.html"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "frontend/storico.html"
+        ],
+        "createdAt": "2026-09-12T11:54:26.915Z",
+        "reason": "same --paper background variable already used in frontend/index.html; storico.html intentionally reuses that established palette, not a new independent choice"
+      }
+    ]
+  }
+}
