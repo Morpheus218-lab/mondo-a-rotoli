@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>txtinstallazione — storico messaggi</title>
+<title>Mondo a Rotoli — Storico messaggi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -132,7 +132,8 @@
 </style>
 </head>
 <body>
-  <div class="eyebrow">TXT INSTALLAZIONE</div>
+  <div class="eyebrow">MONDO A ROTOLI</div>
+  <div class="eyebrow">STORICO MESSAGGI</div>
   <p class="concept">Tutti i messaggi stampati finora, dal più recente.</p>
 
   <div class="storico">
@@ -180,6 +181,7 @@
     async function caricaBatchStorico() {
       if (caricamentoInCorso || tuttoCaricato) return;
       caricamentoInCorso = true;
+      let riuscito = false;
 
       try {
         const risposta = await fetch(`${API_URL}/history.php?limit=${BATCH_STORICO}&offset=${offsetStorico}`);
@@ -197,10 +199,19 @@
         if (messaggi.length < BATCH_STORICO) {
           tuttoCaricato = true;
         }
+        riuscito = true;
       } catch (errore) {
         // Se non arriva, la pagina resta comunque utilizzabile con quanto già caricato
       } finally {
         caricamentoInCorso = false;
+      }
+
+      // Se il contenuto caricato finora non riempie la finestra, non c'è
+      // scrollbar: l'evento "scroll" da cui dipende il caricamento dei
+      // messaggi successivi non scatterebbe mai. Continuiamo a caricare
+      // finché la pagina non diventa scrollabile o lo storico finisce.
+      if (riuscito && !tuttoCaricato && document.body.offsetHeight <= window.innerHeight) {
+        caricaBatchStorico();
       }
     }
 

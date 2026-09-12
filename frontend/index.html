@@ -765,6 +765,7 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
     async function caricaBatchStorico() {
       if (caricamentoInCorso || tuttoCaricato) return;
       caricamentoInCorso = true;
+      let riuscito = false;
 
       try {
         const risposta = await fetch(`${API_URL}/history.php?limit=${BATCH_STORICO}&offset=${offsetStorico}`);
@@ -799,10 +800,19 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
 
         ricalcolaMetriRotolo();
         aggiornaContametri();
+        riuscito = true;
       } catch (errore) {
         // Se non arriva, il sito resta comunque perfettamente utilizzabile
       } finally {
         caricamentoInCorso = false;
+      }
+
+      // Se il contenuto caricato finora non riempie la finestra, non c'è
+      // scrollbar: l'evento "scroll" da cui dipende il caricamento dei
+      // messaggi successivi non scatterebbe mai. Continuiamo a caricare
+      // finché la pagina non diventa scrollabile o lo storico finisce.
+      if (riuscito && !tuttoCaricato && document.body.offsetHeight <= window.innerHeight) {
+        caricaBatchStorico();
       }
     }
 
