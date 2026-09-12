@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS messaggi (
 ) ENGINE=InnoDB;
 
 CREATE INDEX idx_messaggi_status_id ON messaggi (status, id);
+CREATE INDEX idx_messaggi_status_created_at ON messaggi (status, created_at);
 CREATE INDEX idx_messaggi_ip_created_at ON messaggi (ip, created_at);
 
 -- Log delle richieste di "mi piace", usato solo per il rate limit per IP

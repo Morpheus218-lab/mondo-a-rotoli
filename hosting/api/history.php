@@ -16,7 +16,7 @@ $offset = max(0, $offset);
 $stmt = $db->prepare(
     'SELECT id, text, created_at, status, likes FROM messaggi
      WHERE status = "delivered"
-     ORDER BY id DESC
+     ORDER BY created_at DESC, id DESC
      LIMIT :limit OFFSET :offset'
 );
 $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
