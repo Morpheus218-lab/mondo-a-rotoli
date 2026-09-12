@@ -1,0 +1,15 @@
+[Unit]
+Description=mondo-a-rotoli poller
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/mondo-a-rotoli
+EnvironmentFile=/home/pi/mondo-a-rotoli/backend/.env
+ExecStart=/home/pi/mondo-a-rotoli/backend/venv/bin/python3 /home/pi/mondo-a-rotoli/backend/poller.py
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target

@@ -102,7 +102,7 @@ deploy, cartelle diverse finiscono su macchine diverse.
 | [`frontend/`](frontend/) | Hosting condiviso, root del sito | `index.html`, la pagina statica che i visitatori vedono |
 | [`hosting/api/`](hosting/api/) | Hosting condiviso, dentro `api/` | Gli endpoint PHP (`message.php`, `history.php`, `claim.php`, `ack.php`) + `db.php` (funzioni condivise) + `config.php` (credenziali, **non committato**, va creato copiando `config.php.example`) |
 | [`hosting/schema.sql`](hosting/schema.sql) | Hosting condiviso, eseguito una volta sul database MySQL | Schema della tabella `messaggi` |
-| [`backend/`](backend/) | Raspberry Pi | `poller.py` (loop principale), `api_client.py` (chiamate HTTP), `printer.py` (stampa), `.env` (config, **non committato**), `txtinstallazione.service` (systemd) |
+| [`backend/`](backend/) | Raspberry Pi | `poller.py` (loop principale), `api_client.py` (chiamate HTTP), `printer.py` (stampa), `.env` (config, **non committato**), `mondo-a-rotoli.service` (systemd) |
 
 Niente, in questo repo, gira sull'hosting E sul Pi contemporaneamente: ogni
 cartella ha una sola destinazione. `docs/` non va deployato da nessuna
