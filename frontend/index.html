@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>txtinstallazione — scrivi il prossimo prompt</title>
+<title>Mondo a Rotoli — scrivi il prossimo prompt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -58,6 +58,7 @@
   .pagina {
     width: 100%;
     max-width: 520px;
+    flex-shrink: 0;
   }
 
   .strip {
@@ -120,12 +121,6 @@
     line-height: 1.55;
     word-break: break-word;
     white-space: pre-wrap;
-  }
-
-  .ultimo-vuoto {
-    font-size: 13px;
-    color: var(--ink-soft);
-    font-style: italic;
   }
 
   .prossimo-label {
@@ -218,11 +213,12 @@
     margin-top: 16px;
   }
 
-  /* --- storico messaggi --- */
+  /* --- storico messaggi: due viste, rotolo verticale e lista orizzontale --- */
   .storico {
     width: 100%;
     max-width: 440px;
     margin: 34px auto 0;
+    flex-shrink: 0;
   }
 
   .storico-titolo {
@@ -234,11 +230,112 @@
     margin-bottom: 16px;
   }
 
+  .storico-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .toggle-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+
+  .toggle-btn.attivo {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+
+  .storico-vuoto {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 10px 0;
+  }
+
+  .storico-vista[hidden] { display: none; }
+
+  /* vista rotolo: testo verticale, font del rotolo fisico */
+  .ultimo-verticale-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
+  .ultimo-verticale {
+    background: var(--card);
+    border: 1px dashed var(--line);
+    padding: 20px 20px;
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    flex-shrink: 0;
+  }
+
+  .voce-verticale-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .ultimo-verticale-testo {
+    width: 22px;
+    text-align: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    line-height: 1.5;
+    flex-shrink: 0;
+  }
+
+  .like-verticale {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  .like-verticale.attivo { color: var(--red); }
+
+  .condividi-btn {
+    display: flex;
+    align-items: center;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .condividi-btn:hover { color: var(--red); }
+
+  .voce-azioni {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* vista lista: box orizzontali, come lo storico originale */
   .voce-storico {
     background: var(--card);
     border: 1px dashed var(--line);
     padding: 14px 16px;
     margin-bottom: 10px;
+    cursor: pointer;
+    user-select: none;
   }
 
   .voce-label {
@@ -263,15 +360,15 @@
     line-height: 1.55;
     word-break: break-word;
     white-space: pre-wrap;
+    margin-bottom: 8px;
   }
 
-  .storico-vuoto {
-    text-align: center;
-    font-size: 13px;
+  .voce-like {
+    font-size: 11px;
     color: var(--ink-soft);
-    font-style: italic;
-    padding: 10px 0;
   }
+
+  .voce-like.attivo { color: var(--red); }
 
   .torna-su {
     position: fixed;
@@ -295,12 +392,59 @@
 
   .torna-su.visibile { display: flex; }
   .torna-su:hover { background: var(--red); }
+
+  .contametri {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    background: var(--ink);
+    color: #fff;
+    padding: 9px 13px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(32,20,14,0.25);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+
+  .contametri-unita {
+    font-size: 12px;
+    color: var(--red-pale);
+    margin-left: 2px;
+  }
+
+  .contametri.visibile { opacity: 1; transform: translateY(0); }
+
+  .contametri-etichetta {
+    display: block;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    letter-spacing: 0.5px;
+    color: var(--red-pale);
+    margin-bottom: 5px;
+  }
+
+  .contametri-valore {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+  }
 </style>
 </head>
 <body>
   <div class="pagina">
-    <div class="eyebrow">TXT INSTALLAZIONE</div>
-    <p class="concept">Quello che scrivi qui attraversa la rete e arriva direttamente nel nostro studio a Napoli, dove viene immediatamente stampato. Il bit diventa atomo, la distanza si annulla: un piccolo atto di entanglement tra te, noi e lo spazio.</p>
+    <div class="eyebrow">IL MONDO A ROTOLI</div>
+    <p class="concept">
+        Condividi una pratica per evitare che il mondo vada a rotoli.
+
+Quello che scrivi qui attraversa la rete e arriva nel nostro studio a Casalnuovo di Napoli, dove viene immediatamente stampato.
+
+Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazio.
+
+
+    </p>
     <div class="strip">
     <div class="card">
       <div class="ultimo" id="ultimo">
@@ -323,13 +467,31 @@
 
   <div class="storico">
     <div class="storico-titolo">MESSAGGI PRECEDENTI</div>
-    <div id="storicoLista"></div>
+    <div class="storico-toggle">
+      <button class="toggle-btn" id="toggleRotolo" data-vista="rotolo">ROTOLO</button>
+      <button class="toggle-btn attivo" id="toggleLista" data-vista="lista">LISTA</button>
+    </div>
+
+    <div class="storico-vista" id="vistaRotolo" hidden>
+      <div class="ultimo-verticale-wrap">
+        <div class="ultimo-verticale" id="storicoRotolo"></div>
+      </div>
+    </div>
+
+    <div class="storico-vista" id="vistaLista">
+      <div id="storicoListaBox"></div>
+    </div>
   </div>
 
   <button class="torna-su" id="tornaSu" aria-label="Torna su">↑</button>
 
+  <div class="contametri" id="contametri">
+    <span class="contametri-etichetta">CARTA STAMPATA</span>
+    <span class="contametri-valore" id="contametriValore">0,00</span><span class="contametri-unita">m</span>
+  </div>
+
   <script>
-    const API_URL = '/api';
+    const API_URL = './api';
 
     const textarea = document.getElementById('testo');
     const bottone = document.getElementById('invia');
@@ -338,7 +500,120 @@
     const ultimoTesto = document.getElementById('ultimoTesto');
     const ultimoQuando = document.getElementById('ultimoQuando');
     const contatore = document.getElementById('contatore');
-    const storicoLista = document.getElementById('storicoLista');
+    const storicoRotolo = document.getElementById('storicoRotolo');
+    const storicoListaBox = document.getElementById('storicoListaBox');
+    const toggleRotolo = document.getElementById('toggleRotolo');
+    const toggleLista = document.getElementById('toggleLista');
+    const vistaRotolo = document.getElementById('vistaRotolo');
+    const vistaLista = document.getElementById('vistaLista');
+    const contametri = document.getElementById('contametri');
+    const contametriValore = document.getElementById('contametriValore');
+
+    toggleRotolo.addEventListener('click', () => {
+      vistaRotolo.hidden = false;
+      vistaLista.hidden = true;
+      toggleRotolo.classList.add('attivo');
+      toggleLista.classList.remove('attivo');
+      aggiornaContametri();
+    });
+
+    toggleLista.addEventListener('click', () => {
+      vistaRotolo.hidden = true;
+      vistaLista.hidden = false;
+      toggleLista.classList.add('attivo');
+      toggleRotolo.classList.remove('attivo');
+      aggiornaContametri();
+    });
+
+    // Altezza reale di un carattere sul rotolo fisico: FONT_SIZE=165 in
+    // printer.py corrisponde a "circa 2.6cm di altezza lettere" (vedi
+    // commento nel codice del backend) — usiamo lo stesso valore qui per
+    // far corrispondere i metri mostrati a quanta carta verrebbe stampata.
+    const CM_PER_CARATTERE = 2.6;
+    // Intestazione "PROMPT:" + spazio vuoto tra un messaggio e il successivo
+    // (RIGHE_SEPARAZIONE in printer.py): stima approssimativa in cm.
+    const CM_EXTRA_PER_MESSAGGIO = 6;
+
+    // Percorre le voci della vista rotolo e assegna a ciascuna l'intervallo
+    // cumulativo (in cm) che occuperebbe sul rotolo fisico, così lo scroll
+    // può calcolare "a che punto del rotolo" si trova il visitatore.
+    function ricalcolaMetriRotolo() {
+      let cm = 0;
+      Array.from(storicoRotolo.children).forEach(el => {
+        if (!el.classList.contains('voce-verticale-wrap')) return;
+        const testoEl = el.querySelector('.ultimo-verticale-testo');
+        const lunghezza = testoEl ? testoEl.textContent.length : 0;
+        el.dataset.cmInizio = cm;
+        cm += lunghezza * CM_PER_CARATTERE + CM_EXTRA_PER_MESSAGGIO;
+        el.dataset.cmFine = cm;
+      });
+    }
+
+    let aggiornamentoMetriInCorso = false;
+    function aggiornaContametri() {
+      if (aggiornamentoMetriInCorso) return;
+      aggiornamentoMetriInCorso = true;
+
+      requestAnimationFrame(() => {
+        aggiornamentoMetriInCorso = false;
+
+        if (vistaRotolo.hidden) {
+          contametri.classList.remove('visibile');
+          return;
+        }
+
+        const voci = Array.from(storicoRotolo.children).filter(el =>
+          el.classList.contains('voce-verticale-wrap')
+        );
+
+        if (voci.length === 0) {
+          contametri.classList.remove('visibile');
+          return;
+        }
+
+        const riferimentoY = window.innerHeight / 2;
+        const vocePrima = voci[0];
+        const voceUltima = voci[voci.length - 1];
+        const rectPrima = vocePrima.getBoundingClientRect();
+        const rectUltima = voceUltima.getBoundingClientRect();
+
+        if (rectUltima.bottom < 0 || rectPrima.top > window.innerHeight) {
+          contametri.classList.remove('visibile');
+          return;
+        }
+
+        let cm = null;
+        for (const voce of voci) {
+          const rect = voce.getBoundingClientRect();
+          if (rect.top <= riferimentoY && rect.bottom >= riferimentoY) {
+            const frazione = Math.min(1, Math.max(0, (riferimentoY - rect.top) / (rect.bottom - rect.top)));
+            const cmInizio = parseFloat(voce.dataset.cmInizio);
+            const cmFine = parseFloat(voce.dataset.cmFine);
+            cm = cmInizio + frazione * (cmFine - cmInizio);
+            break;
+          }
+        }
+
+        if (cm === null) {
+          if (riferimentoY < rectPrima.top) {
+            cm = 0;
+          } else if (riferimentoY > rectUltima.bottom) {
+            cm = parseFloat(voceUltima.dataset.cmFine);
+          } else {
+            contametri.classList.add('visibile');
+            return; // tra due voci (nel gap): lascia il valore mostrato finora
+          }
+        }
+
+        contametriValore.textContent = (cm / 100).toLocaleString('it-IT', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        contametri.classList.add('visibile');
+      });
+    }
+
+    window.addEventListener('scroll', aggiornaContametri);
 
     function aggiornaContatore() {
       const n = textarea.value.length;
@@ -358,23 +633,132 @@
       return `${Math.floor(ore / 24)} g fa`;
     }
 
-    function creaVoceStorico(msg) {
-      const div = document.createElement('div');
-      div.className = 'voce-storico';
-      div.innerHTML = `
+    // Costruisce il testo verticale carattere-per-carattere usando solo nodi
+    // DOM (createTextNode + <br>), mai innerHTML/concatenazione di stringhe:
+    // il testo arriva da input utente via API e non va mai trattato come HTML.
+    function creaTestoVerticale(testo) {
+      const contenitore = document.createElement('div');
+      contenitore.className = 'ultimo-verticale-testo';
+      const caratteri = Array.from(testo);
+      caratteri.forEach((carattere, indice) => {
+        contenitore.appendChild(document.createTextNode(carattere));
+        if (indice < caratteri.length - 1) {
+          contenitore.appendChild(document.createElement('br'));
+        }
+      });
+      return contenitore;
+    }
+
+    const CHIAVE_LIKE = 'txtinstallazione_liked_ids';
+
+    function leggiIdLikeati() {
+      try {
+        return JSON.parse(localStorage.getItem(CHIAVE_LIKE)) || [];
+      } catch (errore) {
+        return [];
+      }
+    }
+
+    function salvaIdLikeato(id) {
+      try {
+        const ids = leggiIdLikeati();
+        if (!ids.includes(id)) {
+          ids.push(id);
+          localStorage.setItem(CHIAVE_LIKE, JSON.stringify(ids));
+        }
+      } catch (errore) {
+        // localStorage non disponibile: il like funziona comunque,
+        // solo non ricorda cosa hai già messo like tra una visita e l'altra
+      }
+    }
+
+    // Solo aggiunta, nessun "togli like": una volta messo like da questo
+    // browser, il cuoricino resta attivo e non manda più richieste per
+    // quello stesso messaggio.
+    async function gestisciLike(msg, etichette) {
+      if (!msg.id || leggiIdLikeati().includes(msg.id)) return;
+
+      try {
+        const risposta = await fetch(`${API_URL}/like.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: msg.id })
+        });
+        if (!risposta.ok) return;
+        const dati = await risposta.json();
+
+        msg.likes = dati.likes;
+        etichette.forEach(el => {
+          el.textContent = `♥ ${msg.likes}`;
+          el.classList.add('attivo');
+        });
+
+        salvaIdLikeato(msg.id);
+      } catch (errore) {
+        // se non arriva, il messaggio resta comunque visibile e usabile
+      }
+    }
+
+    const ICONA_AEREOPLANINO =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>';
+
+    function costruisciUrlWhatsApp(testo) {
+      const messaggioCondiviso = `"${testo}"\n\n— Il Mondo a Rotoli\nhttps://cuoredinapoli.net/mondoarotoli`;
+      return `https://wa.me/?text=${encodeURIComponent(messaggioCondiviso)}`;
+    }
+
+    // Crea entrambe le rappresentazioni dello stesso messaggio (rotolo + lista),
+    // collegate allo stesso like: un doppio click su una delle due aggiorna anche l'altra.
+    function creaVoceMessaggio(msg) {
+      const likeIniziali = msg.likes || 0;
+      const giaLikeato = msg.id && leggiIdLikeati().includes(msg.id);
+
+      const wrapVerticale = document.createElement('div');
+      wrapVerticale.className = 'voce-verticale-wrap';
+      const testoVerticale = creaTestoVerticale(msg.text);
+      const likeVerticale = document.createElement('div');
+      likeVerticale.className = 'like-verticale' + (giaLikeato ? ' attivo' : '');
+      likeVerticale.textContent = `♥ ${likeIniziali}`;
+      const condividiVerticale = document.createElement('a');
+      condividiVerticale.className = 'condividi-btn';
+      condividiVerticale.href = costruisciUrlWhatsApp(msg.text);
+      condividiVerticale.target = '_blank';
+      condividiVerticale.rel = 'noopener noreferrer';
+      condividiVerticale.innerHTML = ICONA_AEREOPLANINO;
+      condividiVerticale.setAttribute('aria-label', 'Condividi su WhatsApp');
+      condividiVerticale.addEventListener('click', e => e.stopPropagation());
+      wrapVerticale.appendChild(testoVerticale);
+      wrapVerticale.appendChild(likeVerticale);
+      wrapVerticale.appendChild(condividiVerticale);
+
+      const voceOrizzontale = document.createElement('div');
+      voceOrizzontale.className = 'voce-storico';
+      voceOrizzontale.innerHTML = `
         <div class="voce-label">
           <span>PROMPT:</span>
           <span class="voce-quando"></span>
         </div>
         <div class="voce-testo"></div>
+        <div class="voce-azioni">
+          <span class="voce-like${giaLikeato ? ' attivo' : ''}">♥ ${likeIniziali}</span>
+          <a class="condividi-btn" href="${costruisciUrlWhatsApp(msg.text)}" target="_blank" rel="noopener noreferrer" aria-label="Condividi su WhatsApp">${ICONA_AEREOPLANINO}</a>
+        </div>
       `;
-      div.querySelector('.voce-quando').textContent = tempoFa(msg.created_at);
-      div.querySelector('.voce-testo').textContent = msg.text;
-      return div;
+      voceOrizzontale.querySelector('.voce-quando').textContent = tempoFa(msg.created_at);
+      voceOrizzontale.querySelector('.voce-testo').textContent = msg.text;
+      const likeOrizzontale = voceOrizzontale.querySelector('.voce-like');
+      voceOrizzontale.querySelector('.condividi-btn').addEventListener('click', e => e.stopPropagation());
+
+      const etichetteLike = [likeVerticale, likeOrizzontale];
+      const alDoppioClick = () => gestisciLike(msg, etichetteLike);
+      wrapVerticale.addEventListener('dblclick', alDoppioClick);
+      voceOrizzontale.addEventListener('dblclick', alDoppioClick);
+
+      return { verticale: wrapVerticale, orizzontale: voceOrizzontale };
     }
 
     let offsetStorico = 0;
-    const BATCH_STORICO = 10;
+    const BATCH_STORICO = 5;
     let caricamentoInCorso = false;
     let tuttoCaricato = false;
 
@@ -389,23 +773,32 @@
         const messaggi = dati.messaggi || [];
 
         if (offsetStorico === 0) {
-          storicoLista.innerHTML = '';
+          storicoRotolo.innerHTML = '';
+          storicoListaBox.innerHTML = '';
           const primo = messaggi[0];
           if (primo) {
             ultimoTesto.textContent = primo.text;
             ultimoQuando.textContent = tempoFa(primo.created_at);
             ultimoBox.classList.add('visibile');
           } else {
-            storicoLista.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
+            storicoRotolo.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
+            storicoListaBox.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
           }
         }
 
-        messaggi.forEach(m => storicoLista.appendChild(creaVoceStorico(m)));
+        messaggi.forEach(m => {
+          const voce = creaVoceMessaggio(m);
+          storicoRotolo.appendChild(voce.verticale);
+          storicoListaBox.appendChild(voce.orizzontale);
+        });
 
         offsetStorico += messaggi.length;
         if (messaggi.length < BATCH_STORICO) {
           tuttoCaricato = true;
         }
+
+        ricalcolaMetriRotolo();
+        aggiornaContametri();
       } catch (errore) {
         // Se non arriva, il sito resta comunque perfettamente utilizzabile
       } finally {
@@ -454,6 +847,8 @@
           throw new Error('Errore del server');
         }
 
+        const dati = await risposta.json();
+
         mostraStatus('Messaggio inviato: uscirà stampato a breve.', 'success');
         textarea.value = '';
         aggiornaContatore();
@@ -462,7 +857,17 @@
         ultimoQuando.textContent = 'proprio ora';
         ultimoBox.classList.add('visibile');
 
-        storicoLista.prepend(creaVoceStorico({ text: testo, created_at: new Date().toISOString() }));
+        storicoRotolo.querySelector('.storico-vuoto')?.remove();
+        storicoListaBox.querySelector('.storico-vuoto')?.remove();
+
+        // Appena inviato il messaggio è ancora "pending" (non stampato):
+        // il like sarà disponibile solo dopo che risulterà "delivered".
+        const voce = creaVoceMessaggio({ id: dati.id, text: testo, created_at: new Date().toISOString(), likes: 0 });
+        storicoRotolo.prepend(voce.verticale);
+        storicoListaBox.prepend(voce.orizzontale);
+
+        ricalcolaMetriRotolo();
+        aggiornaContametri();
       } catch (errore) {
         mostraStatus('Errore durante l\'invio. Riprova.', 'error');
       } finally {
@@ -481,4 +886,3 @@
   </script>
 </body>
 </html>
-

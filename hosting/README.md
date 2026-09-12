@@ -21,7 +21,17 @@ condiviso (es. `mondoarotoli.cuoredinapoli.net`). Vedi la spec completa in
 ## Endpoint pubblici
 
 - `POST /api/message.php` — body `{"text": "..."}` → `202`/`400`/`413`/`429`.
-- `GET /api/history.php?limit=&offset=` → `200 {"messaggi": [...]}`.
+- `GET /api/history.php?limit=&offset=` → `200 {"messaggi": [...]}` (ogni
+  messaggio include anche `likes`, il numero di "mi piace" ricevuti).
+- `POST /api/like.php` — body `{"id": ...}` → `200`/`400`/`404`/`429`.
+  - `200 {"likes": <nuovo_totale>}`: like registrato.
+  - `400`: campo `id` mancante o non intero.
+  - `404`: messaggio non trovato o non ancora in stato `delivered` (non
+    ha senso mettere like a un messaggio non ancora stampato).
+  - `429`: troppi like dallo stesso IP nella finestra di tempo
+    configurata (`rate_limit_max_like`/`rate_limit_finestra_like_minuti`
+    in `config.php`, di default 30 ogni 2 minuti). Solo aggiunta: non
+    esiste un modo per togliere un like già dato.
 
 ## Endpoint privati (richiedono header `X-Api-Key`)
 
@@ -32,6 +42,30 @@ condiviso (es. `mondoarotoli.cuoredinapoli.net`). Vedi la spec completa in
   - `400`: campo `id` mancante o non intero.
   - `401`: header `X-Api-Key` mancante o invalido.
   - `404`: messaggio non trovato o non in stato `printing`.
+
+## Migrazione: aggiungere i "mi piace" a un database già in produzione
+
+Se hai già eseguito `schema.sql` in passato (il sito è già online), la
+tabella `messaggi` non ha ancora la colonna `likes` né esiste
+`like_eventi`. Esegui una volta, a mano (phpMyAdmin o client `mysql`):
+
+```sql
+ALTER TABLE messaggi ADD COLUMN likes INT NOT NULL DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS like_eventi (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  message_id INT NOT NULL,
+  ip VARCHAR(45) NOT NULL,
+  created_at DATETIME NOT NULL
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_like_eventi_ip_created_at ON like_eventi (ip, created_at);
+```
+
+Poi aggiungi anche a `config.php` (non nel `.example`, in quello reale
+già sull'hosting) le due nuove righe `rate_limit_max_like` e
+`rate_limit_finestra_like_minuti` — vedi `config.php.example` per i
+valori di default.
 
 ## Checklist di test manuale end-to-end
 
@@ -44,6 +78,8 @@ Dopo il deploy, verifica nell'ordine (sostituendo l'URL con quello reale):
 5. Ripeti il punto 1 altre 5 volte di fila dallo stesso IP (il messaggio del punto 1 conta già nella finestra): la quinta ripetizione (sesta chiamata in totale) deve rispondere `429`.
 6. `curl -i -X POST https://TUO_DOMINIO/api/claim.php` (nessun header) → `401`.
 7. `curl -i -X POST https://TUO_DOMINIO/api/ack.php -H "X-Api-Key: sbagliata" -d '{"id": 1}'` → `401`.
+8. `curl -i -X POST https://TUO_DOMINIO/api/like.php -H "Content-Type: application/json" -d '{"id": ID_DEL_PUNTO_3}'` → `200 {"likes": 1}` (usa l'id del messaggio confermato al punto 3, ormai `delivered`).
+9. `curl -i -X POST https://TUO_DOMINIO/api/like.php -H "Content-Type: application/json" -d '{"id": 999999}'` → `404` (id inesistente o non ancora stampato).
 
 ## Sblocco manuale di un messaggio bloccato in `printing`
 
