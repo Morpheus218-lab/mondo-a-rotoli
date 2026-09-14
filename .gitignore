@@ -8,3 +8,4 @@ hosting/api/config.php
 backend/.env
 bridge/.env
 bridge/*.jsonl
+ledwall/*.jsonl

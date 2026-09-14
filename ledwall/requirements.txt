@@ -1,0 +1,21 @@
+# TextWall.py - dipendenze
+#
+# Installa con:
+#   python3 -m pip install -r requirements.txt
+#
+# NOTA: sul Mac ci sono piu' Python. Quello di default (3.9) e' vuoto.
+# Usa il 3.13, dove e' gia' tutto installato:
+#   /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 TextWall.py
+
+# Tela, font e finestra di anteprima.
+# Serve la versione con GUI: NON usare opencv-python-headless,
+# altrimenti cv2.imshow non esiste e l'anteprima non parte.
+opencv-python>=4.8
+
+# Tutta la matematica dei frame (affettatura pannelli, serpentina, gamma)
+numpy>=1.24
+
+# Solo per il muro seriale 56x32 (ARDUINO_ENABLED = True).
+# Se usi solo gli ESP in UDP puoi anche non installarlo:
+# lo script parte lo stesso, il try/except lo gestisce.
+pyserial>=3.5

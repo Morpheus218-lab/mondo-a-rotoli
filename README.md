@@ -103,7 +103,8 @@ deploy, cartelle diverse finiscono su macchine diverse.
 | [`hosting/api/`](hosting/api/) | Hosting condiviso, dentro `api/` | Gli endpoint PHP (`message.php`, `history.php`, `claim.php`, `ack.php`) + `db.php` (funzioni condivise) + `config.php` (credenziali, **non committato**, va creato copiando `config.php.example`) |
 | [`hosting/schema.sql`](hosting/schema.sql) | Hosting condiviso, eseguito una volta sul database MySQL | Schema della tabella `messaggi` |
 | [`backend/`](backend/) | Raspberry Pi (stampante) | `poller.py` (loop principale), `api_client.py` (chiamate HTTP), `printer.py` (stampa), `.env` (config, **non committato**), `mondo-a-rotoli.service` (systemd) |
-| [`bridge/`](bridge/) | Secondo Raspberry Pi (opzionale, collegato a un MacBook) | `fetcher.py` (loop principale), `api_client.py` (chiamate HTTP), `.env` (config, **non committato**), `mondo-a-rotoli-bridge.service` (systemd) |
+| [`bridge/`](bridge/) | Secondo Raspberry Pi (opzionale, collegato a un MacBook) | `fetcher.py` (loop principale), `api_client.py` (chiamate HTTP), `bluetooth_sender.py` (invio via obexftp), `.env` (config, **non committato**), `mondo-a-rotoli-bridge.service` (systemd) |
+| [`ledwall/`](ledwall/) | MacBook (opzionale, collegato al Pi #2 via Bluetooth) | `TextWall.py` (loop principale, scrive sul ledwall via UDP), `messaggi_watcher.py` (legge i file ricevuti dal Pi #2), `mostrati.jsonl` (stato/archivio, **non committato**, creato al primo avvio) |
 
 Niente, in questo repo, gira sull'hosting E su un Pi contemporaneamente: ogni
 cartella ha una sola destinazione. `docs/` non va deployato da nessuna
@@ -119,7 +120,10 @@ ciascuna parte:
 - [`frontend/README.md`](frontend/README.md) — nota rapida sul frontend
   (non richiede configurazione per-deploy).
 - [`bridge/README.md`](bridge/README.md) — secondo Raspberry Pi
-  opzionale: legge lo storico pubblico e salva in locale i messaggi
-  nuovi, in vista di un futuro invio a un MacBook via Bluetooth/USB (non
-  ancora implementato). Non necessario per far funzionare l'installazione
-  di base.
+  opzionale: legge lo storico pubblico, salva in locale i messaggi nuovi
+  e li manda via Bluetooth a un MacBook. Non necessario per far
+  funzionare l'installazione di base.
+- [`ledwall/README.md`](ledwall/README.md) — script sul MacBook
+  opzionale: mostra su un ledwall via UDP sia il testo digitato a mano
+  sia i messaggi ricevuti in automatico dal Pi #2. Non necessario per far
+  funzionare l'installazione di base.
