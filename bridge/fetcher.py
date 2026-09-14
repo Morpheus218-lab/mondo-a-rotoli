@@ -5,6 +5,7 @@ import os
 import time
 
 import api_client
+import bluetooth_sender
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ def _leggi_id_gia_salvati(output_path):
     return id_visti
 
 
-def process_one_ciclo(base_url, output_path):
+def process_one_ciclo(base_url, output_path, indirizzo_mac=None, canale=None):
     """Recupera lo storico dall'hosting e appende a output_path (JSON
     Lines) i messaggi non ancora presenti nel file, dal piu' vecchio al
     piu' nuovo. Al primo avvio (nessun file precedente) salva tutti i
@@ -59,11 +60,19 @@ def process_one_ciclo(base_url, output_path):
         for messaggio in nuovi:
             f.write(json.dumps(messaggio, ensure_ascii=False) + "\n")
 
+    if indirizzo_mac and canale:
+        try:
+            inviato = bluetooth_sender.invia_file(str(output_path), indirizzo_mac, canale)
+            if not inviato:
+                logger.error("Invio Bluetooth del file al Mac non confermato dall'output di obexftp")
+        except Exception:
+            logger.exception("Errore durante l'invio Bluetooth del file al Mac")
 
-def fetcher_loop(base_url, output_path):
+
+def fetcher_loop(base_url, output_path, indirizzo_mac=None, canale=None):
     while True:
         try:
-            process_one_ciclo(base_url, output_path)
+            process_one_ciclo(base_url, output_path, indirizzo_mac, canale)
         except Exception:
             logger.exception("Errore inatteso nel ciclo di fetch")
         time.sleep(INTERVALLO_SECONDI)
@@ -74,5 +83,10 @@ if __name__ == "__main__":
 
     base_url = os.environ["API_BASE_URL"]
     output_path = os.environ.get("OUTPUT_FILE", "messaggi.jsonl")
+    indirizzo_mac = os.environ.get("MACBOOK_BT_ADDRESS")
+    canale = os.environ.get("BT_OBEX_CHANNEL")
 
-    fetcher_loop(base_url, output_path)
+    if not indirizzo_mac or not canale:
+        logger.info("MACBOOK_BT_ADDRESS/BT_OBEX_CHANNEL non configurate: invio Bluetooth disattivato")
+
+    fetcher_loop(base_url, output_path, indirizzo_mac, canale)

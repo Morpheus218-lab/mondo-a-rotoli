@@ -21,12 +21,28 @@ Crea un file `.env` (non committato, vedi `.gitignore`) nella cartella
 ```
 API_BASE_URL=https://TUO_DOMINIO/api
 OUTPUT_FILE=/home/pi/mondo-a-rotoli/bridge/messaggi.jsonl
+MACBOOK_BT_ADDRESS=A4:CF:99:61:92:F8
+BT_OBEX_CHANNEL=10
 ```
 
 `OUTPUT_FILE` è opzionale (default `messaggi.jsonl`, risolto rispetto
 alla working directory del processo — con il servizio systemd incluso
 questa è la root del repository, non `bridge/`: per questo conviene
 usare un percorso assoluto in `.env` invece di lasciare il default).
+
+`MACBOOK_BT_ADDRESS` e `BT_OBEX_CHANNEL` sono opzionali: se assenti, il
+bridge funziona come prima, senza inviare nulla via Bluetooth. Il Mac deve
+essere già accoppiato (`bluetoothctl pair`/`trust`) e avere la
+Condivisione Bluetooth attiva con "Accetta e salva" verso la cartella
+desiderata. Il canale OBEX Object Push si scopre con:
+
+```bash
+sudo apt install -y obexftp
+sdptool browse MACBOOK_BT_ADDRESS
+```
+
+cercando la voce "OBEX Object Push" e il suo `Channel` — può cambiare se
+il pairing viene rifatto da zero, in quel caso va riscoperto.
 
 ## Formato del file di output
 
