@@ -308,9 +308,12 @@ MACBOOK_BT_ADDRESS=A4:CF:99:61:92:F8
 BT_OBEX_CHANNEL=10
 ```
 
-e subito sotto il paragrafo su `OUTPUT_FILE` aggiungi:
+e subito sotto il paragrafo su `OUTPUT_FILE` aggiungi (testo Markdown
+letterale da scrivere nel README — nota il fence a 4 backtick qui sotto,
+serve solo a delimitare questo blocco nel piano, non fa parte del testo
+da scrivere):
 
-```
+````markdown
 `MACBOOK_BT_ADDRESS` e `BT_OBEX_CHANNEL` sono opzionali: se assenti, il
 bridge funziona come prima, senza inviare nulla via Bluetooth. Il Mac deve
 essere già accoppiato (`bluetoothctl pair`/`trust`) e avere la
@@ -324,7 +327,7 @@ sdptool browse MACBOOK_BT_ADDRESS
 
 cercando la voce "OBEX Object Push" e il suo `Channel` — può cambiare se
 il pairing viene rifatto da zero, in quel caso va riscoperto.
-```
+````
 
 - [ ] **Step 6: Commit**
 
