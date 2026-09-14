@@ -107,3 +107,69 @@ def test_gestisce_errore_di_rete_durante_il_recupero(tmp_path, monkeypatch):
     fetcher.process_one_ciclo("http://esempio", str(output_path))  # non deve sollevare
 
     assert not output_path.exists()
+
+
+def test_invia_via_bluetooth_quando_configurato_e_ci_sono_messaggi_nuovi(tmp_path, monkeypatch):
+    output_path = tmp_path / "messaggi.jsonl"
+    storico = [{"id": 1, "text": "ciao"}]
+    monkeypatch.setattr(fetcher.api_client, "recupera_storico", lambda *a, **k: storico)
+
+    chiamate = []
+    monkeypatch.setattr(
+        fetcher.bluetooth_sender,
+        "invia_file",
+        lambda path, mac, canale: chiamate.append((path, mac, canale)) or True,
+    )
+
+    fetcher.process_one_ciclo(
+        "http://esempio", str(output_path), indirizzo_mac="A4:CF:99:61:92:F8", canale=10
+    )
+
+    assert chiamate == [(str(output_path), "A4:CF:99:61:92:F8", 10)]
+
+
+def test_non_invia_via_bluetooth_se_non_configurato(tmp_path, monkeypatch):
+    output_path = tmp_path / "messaggi.jsonl"
+    storico = [{"id": 1, "text": "ciao"}]
+    monkeypatch.setattr(fetcher.api_client, "recupera_storico", lambda *a, **k: storico)
+
+    def invia_file_non_atteso(*a, **k):
+        raise AssertionError("invia_file non doveva essere chiamato")
+
+    monkeypatch.setattr(fetcher.bluetooth_sender, "invia_file", invia_file_non_atteso)
+
+    fetcher.process_one_ciclo("http://esempio", str(output_path))  # nessun mac/canale
+
+
+def test_non_invia_via_bluetooth_se_non_ci_sono_messaggi_nuovi(tmp_path, monkeypatch):
+    output_path = tmp_path / "messaggi.jsonl"
+    output_path.write_text(json.dumps({"id": 1, "text": "a"}) + "\n", encoding="utf-8")
+    storico = [{"id": 1, "text": "a"}]
+    monkeypatch.setattr(fetcher.api_client, "recupera_storico", lambda *a, **k: storico)
+
+    def invia_file_non_atteso(*a, **k):
+        raise AssertionError("invia_file non doveva essere chiamato")
+
+    monkeypatch.setattr(fetcher.bluetooth_sender, "invia_file", invia_file_non_atteso)
+
+    fetcher.process_one_ciclo(
+        "http://esempio", str(output_path), indirizzo_mac="A4:CF:99:61:92:F8", canale=10
+    )
+
+
+def test_gestisce_errore_durante_invio_bluetooth_senza_sollevare(tmp_path, monkeypatch):
+    output_path = tmp_path / "messaggi.jsonl"
+    storico = [{"id": 1, "text": "ciao"}]
+    monkeypatch.setattr(fetcher.api_client, "recupera_storico", lambda *a, **k: storico)
+
+    def invia_file_rotto(*a, **k):
+        raise RuntimeError("bluetooth non disponibile")
+
+    monkeypatch.setattr(fetcher.bluetooth_sender, "invia_file", invia_file_rotto)
+
+    fetcher.process_one_ciclo(  # non deve sollevare
+        "http://esempio", str(output_path), indirizzo_mac="A4:CF:99:61:92:F8", canale=10
+    )
+
+    contenuto = output_path.read_text(encoding="utf-8")
+    assert json.dumps({"id": 1, "text": "ciao"}, ensure_ascii=False) in contenuto
