@@ -6,3 +6,5 @@ venv/
 .pytest_cache/
 hosting/api/config.php
 backend/.env
+bridge/.env
+*.jsonl

@@ -102,9 +102,10 @@ deploy, cartelle diverse finiscono su macchine diverse.
 | [`frontend/`](frontend/) | Hosting condiviso, root del sito | `index.html` (pagina principale: invio + storico), `storico.html` (solo storico, sola lettura) |
 | [`hosting/api/`](hosting/api/) | Hosting condiviso, dentro `api/` | Gli endpoint PHP (`message.php`, `history.php`, `claim.php`, `ack.php`) + `db.php` (funzioni condivise) + `config.php` (credenziali, **non committato**, va creato copiando `config.php.example`) |
 | [`hosting/schema.sql`](hosting/schema.sql) | Hosting condiviso, eseguito una volta sul database MySQL | Schema della tabella `messaggi` |
-| [`backend/`](backend/) | Raspberry Pi | `poller.py` (loop principale), `api_client.py` (chiamate HTTP), `printer.py` (stampa), `.env` (config, **non committato**), `mondo-a-rotoli.service` (systemd) |
+| [`backend/`](backend/) | Raspberry Pi (stampante) | `poller.py` (loop principale), `api_client.py` (chiamate HTTP), `printer.py` (stampa), `.env` (config, **non committato**), `mondo-a-rotoli.service` (systemd) |
+| [`bridge/`](bridge/) | Secondo Raspberry Pi (opzionale, collegato a un MacBook) | `fetcher.py` (loop principale), `api_client.py` (chiamate HTTP), `.env` (config, **non committato**), `mondo-a-rotoli-bridge.service` (systemd) |
 
-Niente, in questo repo, gira sull'hosting E sul Pi contemporaneamente: ogni
+Niente, in questo repo, gira sull'hosting E su un Pi contemporaneamente: ogni
 cartella ha una sola destinazione. `docs/` non va deployato da nessuna
 parte — contiene solo la documentazione di design del progetto.
 
@@ -117,3 +118,8 @@ ciascuna parte:
   poller sul Raspberry Pi, esecuzione come servizio systemd.
 - [`frontend/README.md`](frontend/README.md) — nota rapida sul frontend
   (non richiede configurazione per-deploy).
+- [`bridge/README.md`](bridge/README.md) — secondo Raspberry Pi
+  opzionale: legge lo storico pubblico e salva in locale i messaggi
+  nuovi, in vista di un futuro invio a un MacBook via Bluetooth/USB (non
+  ancora implementato). Non necessario per far funzionare l'installazione
+  di base.

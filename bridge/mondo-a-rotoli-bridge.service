@@ -1,0 +1,15 @@
+[Unit]
+Description=mondo-a-rotoli bridge fetcher
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/mondo-a-rotoli
+EnvironmentFile=/home/pi/mondo-a-rotoli/bridge/.env
+ExecStart=/home/pi/mondo-a-rotoli/bridge/venv/bin/python3 /home/pi/mondo-a-rotoli/bridge/fetcher.py
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target
