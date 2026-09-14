@@ -12,10 +12,16 @@ def invia_file(path, indirizzo_mac, canale):
     dettaglio noto di obexftp, il Mac chiude la connessione OBEX subito
     dopo il trasferimento, prima della disconnessione esplicita - il file
     arriva comunque."""
-    risultato = subprocess.run(
-        ["obexftp", "-b", indirizzo_mac, "-B", str(canale), "-p", str(path)],
-        capture_output=True,
-        text=True,
-    )
+    try:
+        risultato = subprocess.run(
+            ["obexftp", "-b", indirizzo_mac, "-B", str(canale), "-p", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        logger.error("obexftp non ha risposto entro 60s, invio annullato")
+        return False
+
     output = (risultato.stdout or "") + (risultato.stderr or "")
     return "Sending" in output and "/done" in output

@@ -1,4 +1,6 @@
 # bridge/tests/test_bluetooth_sender.py
+import subprocess
+
 import bluetooth_sender
 
 
@@ -48,3 +50,12 @@ def test_invia_file_passa_indirizzo_canale_e_percorso_al_comando(monkeypatch):
     assert chiamate[0] == [
         "obexftp", "-b", "A4:CF:99:61:92:F8", "-B", "10", "-p", "messaggi.jsonl",
     ]
+
+
+def test_invia_file_ritorna_false_se_obexftp_va_in_timeout(monkeypatch):
+    def run_finto(*a, **k):
+        raise subprocess.TimeoutExpired(cmd=["obexftp"], timeout=60)
+
+    monkeypatch.setattr(bluetooth_sender.subprocess, "run", run_finto)
+
+    assert bluetooth_sender.invia_file("messaggi.jsonl", "A4:CF:99:61:92:F8", 10) is False

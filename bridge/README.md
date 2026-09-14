@@ -1,8 +1,7 @@
 # bridge
 
 Client Python pensato per un secondo Raspberry Pi (collegato a un MacBook
-via Bluetooth o USB — l'invio effettivo al Mac non è ancora implementato,
-vedi "Fuori scope" sotto). Ogni 5 secondi interroga lo storico pubblico
+via Bluetooth o USB). Ogni 5 secondi interroga lo storico pubblico
 dell'hosting (`hosting/api/history.php`) e salva in locale, in un file di
 testo formato [JSON Lines](https://jsonlines.org/), i messaggi consegnati
 che non aveva ancora visto.
@@ -43,6 +42,26 @@ sdptool browse MACBOOK_BT_ADDRESS
 
 cercando la voce "OBEX Object Push" e il suo `Channel` — può cambiare se
 il pairing viene rifatto da zero, in quel caso va riscoperto.
+
+### Integrazione con il Mac (TextWall)
+
+Due cose devono corrispondere esattamente tra il Pi e il Mac perché
+l'invio via Bluetooth arrivi davvero a destinazione, e nessuna delle due
+viene validata automaticamente — se sbagliate, il trasferimento "riesce"
+lato bridge ma il muro non mostra mai nulla:
+
+- la cartella per gli elementi ricevuti della Condivisione Bluetooth sul
+  Mac (System Preferences → Condivisione → Condivisione Bluetooth) deve
+  essere impostata esattamente sulla cartella in cui si trova
+  `TextWall.py` sul Mac: `TextWall.py` calcola la cartella da
+  monitorare come la cartella dello script stesso, quindi se la
+  Condivisione Bluetooth è puntata altrove (es. il Desktop) i file
+  arrivano ma il muro non li vedrà mai;
+- il nome del file indicato in `OUTPUT_FILE` (sul Pi) deve avere un nome
+  che corrisponde al pattern `messaggi*.jsonl`: è quello che
+  `messaggi_watcher.py` (sul Mac) usa per trovare i file in arrivo. Se
+  viene rinominato in qualcos'altro, obexftp segnala comunque il
+  trasferimento come riuscito, ma il muro non lo raccoglierà mai.
 
 ## Formato del file di output
 
@@ -97,9 +116,6 @@ adattare i percorsi nel file `.service` se diversi. Log del servizio:
 
 ## Fuori scope (per ora)
 
-- Invio dei messaggi salvati al MacBook via Bluetooth o USB — questo
-  script si ferma al file locale; il ponte verso il Mac è un passo
-  successivo.
 - Recupero retroattivo di messaggi consegnati rimasti fuori dalla
   finestra dei 100 più recenti restituiti da `history.php` (non solo al
   primo avvio: anche dopo una pausa prolungata del bridge).
