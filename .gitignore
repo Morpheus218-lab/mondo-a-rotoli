@@ -7,4 +7,4 @@ venv/
 hosting/api/config.php
 backend/.env
 bridge/.env
-*.jsonl
+bridge/*.jsonl

@@ -12,38 +12,44 @@ INTERVALLO_SECONDI = 5
 LIMITE_STORICO = 100
 
 
-def _leggi_ultimo_id(output_path):
-    """Ritorna l'id dell'ultimo messaggio gia' salvato in output_path
-    (l'ultima riga del file), o None se il file non esiste o e' vuoto."""
+def _leggi_id_gia_salvati(output_path):
+    """Ritorna l'insieme degli id dei messaggi gia' presenti in
+    output_path. Non si basa sull'ultimo id visto: un messaggio puo'
+    restare bloccato in 'printing' sull'hosting e venire consegnato solo
+    piu' tardi, con un id piu' basso di messaggi gia' salvati (vedi
+    hosting/README.md). Le righe non leggibili come JSON (es. una scrittura
+    interrotta a meta' da uno spegnimento) vengono ignorate con un
+    warning, senza bloccare la lettura delle righe successive."""
     if not os.path.exists(output_path):
-        return None
+        return set()
 
-    ultima_riga = None
+    id_visti = set()
     with open(output_path, "r", encoding="utf-8") as f:
-        for riga in f:
+        for numero_riga, riga in enumerate(f, start=1):
             riga = riga.strip()
-            if riga:
-                ultima_riga = riga
+            if not riga:
+                continue
+            try:
+                id_visti.add(json.loads(riga)["id"])
+            except (json.JSONDecodeError, KeyError):
+                logger.warning("Riga %s di %s non leggibile, ignorata", numero_riga, output_path)
 
-    if ultima_riga is None:
-        return None
-
-    return json.loads(ultima_riga)["id"]
+    return id_visti
 
 
 def process_one_ciclo(base_url, output_path):
     """Recupera lo storico dall'hosting e appende a output_path (JSON
-    Lines) i messaggi con id maggiore dell'ultimo gia' salvato, dal piu'
-    vecchio al piu' nuovo. Al primo avvio (nessun file precedente) salva
-    tutti i messaggi trovati nella pagina, fino a LIMITE_STORICO."""
+    Lines) i messaggi non ancora presenti nel file, dal piu' vecchio al
+    piu' nuovo. Al primo avvio (nessun file precedente) salva tutti i
+    messaggi trovati nella pagina, fino a LIMITE_STORICO."""
     try:
         messaggi = api_client.recupera_storico(base_url, limit=LIMITE_STORICO)
     except Exception:
         logger.exception("Errore durante il recupero dello storico")
         return
 
-    ultimo_id = _leggi_ultimo_id(output_path)
-    nuovi = [m for m in messaggi if ultimo_id is None or m["id"] > ultimo_id]
+    id_gia_salvati = _leggi_id_gia_salvati(output_path)
+    nuovi = [m for m in messaggi if m["id"] not in id_gia_salvati]
     nuovi.sort(key=lambda m: m["id"])
 
     if not nuovi:

@@ -20,11 +20,13 @@ Crea un file `.env` (non committato, vedi `.gitignore`) nella cartella
 
 ```
 API_BASE_URL=https://TUO_DOMINIO/api
-OUTPUT_FILE=messaggi.jsonl
+OUTPUT_FILE=/home/pi/mondo-a-rotoli/bridge/messaggi.jsonl
 ```
 
-`OUTPUT_FILE` è opzionale (default `messaggi.jsonl`, nella working
-directory del processo).
+`OUTPUT_FILE` è opzionale (default `messaggi.jsonl`, risolto rispetto
+alla working directory del processo — con il servizio systemd incluso
+questa è la root del repository, non `bridge/`: per questo conviene
+usare un percorso assoluto in `.env` invece di lasciare il default).
 
 ## Formato del file di output
 
@@ -37,11 +39,13 @@ più vecchio al più nuovo), con gli stessi campi restituiti da
 {"id": 42, "text": "un altro messaggio", "created_at": "2026-09-14T10:32:05Z", "status": "delivered", "likes": 0}
 ```
 
-Al primo avvio (nessun file precedente) il bridge salva tutti i messaggi
-trovati nella prima pagina di storico (fino a 100, il massimo
-consentito da `history.php`); se al momento del primo avvio ci sono già
-più di 100 messaggi consegnati, quelli più vecchi non vengono recuperati
-retroattivamente (limite noto, vedi "Fuori scope").
+`history.php` restituisce al massimo 100 messaggi per chiamata (i più
+recenti). Questo non riguarda solo il primo avvio: se il bridge resta
+fermo abbastanza a lungo (Pi spento, hosting irraggiungibile) da
+accumulare più di 100 messaggi consegnati nel frattempo, quelli più
+vecchi della finestra dei 100 più recenti non vengono recuperati
+retroattivamente e restano assenti dal file locale (limite noto, vedi
+"Fuori scope").
 
 ## Sviluppo locale
 
@@ -80,7 +84,7 @@ adattare i percorsi nel file `.service` se diversi. Log del servizio:
 - Invio dei messaggi salvati al MacBook via Bluetooth o USB — questo
   script si ferma al file locale; il ponte verso il Mac è un passo
   successivo.
-- Recupero retroattivo di messaggi consegnati oltre la prima pagina di
-  storico (100) se il bridge parte per la prima volta quando ne esistono
-  già di più.
+- Recupero retroattivo di messaggi consegnati rimasti fuori dalla
+  finestra dei 100 più recenti restituiti da `history.php` (non solo al
+  primo avvio: anche dopo una pausa prolungata del bridge).
 - Rotazione/pulizia del file di output: cresce senza limiti nel tempo.
