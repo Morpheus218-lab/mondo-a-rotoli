@@ -3,20 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mondo a Rotoli — scrivi il prossimo prompt</title>
+<title>Il Mondo a Rotoli — scrivi il prossimo prompt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
+  /* --- GIORNO: tema di base, stesso sistema delle altre pagine --- */
   :root {
-    --paper: #F5EFE6;
+    --paper: #EEF0F3;
     --card: #FFFFFF;
-    --ink: #201A17;
-    --ink-soft: #6B615A;
-    --red: #C81E1E;
-    --red-dark: #931414;
-    --red-pale: #FBEAE6;
-    --line: #E4D9C8;
+    --ink: #14181F;
+    --ink-soft: #5B6472;
+    --red: #D6401F;
+    --red-dark: #A82F14;
+    --red-pale: #FBE4D8;
+    --line: #D8DCE2;
+    --dot: rgba(20,24,31,0.055);
+    --stato-errore-bg: #FBEAEA;
+    --stato-errore-testo: #931414;
+  }
+
+  /* --- NOTTE: segue il telefono di chi guarda, a meno che qui sopra non
+     sia stata scelta esplicitamente "Giorno" --- */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="giorno"]) {
+      --paper: #12151C;
+      --card: #1B212B;
+      --ink: #F3F0EA;
+      --ink-soft: #99A2AC;
+      --red: #EC3A3A;
+      --red-dark: #FF8984;
+      --red-pale: #3C2825;
+      --line: #2A313C;
+      --dot: rgba(243,240,234,0.06);
+      --stato-errore-bg: #3A1E1E;
+      --stato-errore-testo: #FF9B9B;
+    }
+  }
+
+  :root[data-tema="notte"] {
+    --paper: #12151C;
+    --card: #1B212B;
+    --ink: #F3F0EA;
+    --ink-soft: #99A2AC;
+    --red: #EC3A3A;
+    --red-dark: #FF8984;
+    --red-pale: #3C2825;
+    --line: #2A313C;
+    --dot: rgba(243,240,234,0.06);
+    --stato-errore-bg: #3A1E1E;
+    --stato-errore-testo: #FF9B9B;
   }
 
   * { box-sizing: border-box; }
@@ -28,22 +64,55 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 32px 16px;
+    padding: 72px 16px 32px;
     background: var(--paper);
     background-image:
-      radial-gradient(circle at 1px 1px, rgba(32,26,23,0.06) 1px, transparent 0);
+      radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0);
     background-size: 22px 22px;
     color: var(--ink);
     font-family: 'Space Mono', monospace;
   }
 
+  /* --- interruttore chiaro/scuro: stesso stile e comportamento delle
+     altre pagine dell'installazione --- */
+  .interruttore-tema {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 20;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card);
+    color: var(--ink);
+    border: 1px dashed var(--line);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(32,20,14,0.16);
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  }
+
+  .interruttore-tema:hover, .interruttore-tema:focus-visible {
+    border-color: var(--red);
+    color: var(--red);
+    transform: translateY(-1px);
+  }
+
+  .interruttore-tema svg { display: block; }
+  .interruttore-tema svg[hidden] { display: none; }
+  .interruttore-tema[hidden] { display: none; }
+
   .eyebrow {
     font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
-    letter-spacing: 1px;
+    font-size: clamp(30px, 11vw, 84px);
+    line-height: 1.2;
+    letter-spacing: 0.5px;
     color: var(--red);
     text-align: center;
-    margin-bottom: 14px;
+    text-wrap: balance;
+    margin: 4px 0 22px;
   }
 
   .concept {
@@ -167,7 +236,7 @@
     padding: 15px;
     border: none;
     background: var(--ink);
-    color: #fff;
+    color: var(--card);
     font-family: 'Space Mono', monospace;
     font-size: 14px;
     font-weight: 700;
@@ -200,9 +269,9 @@
 
   .status.error {
     display: block;
-    background: #FBEAEA;
-    border-left-color: #931414;
-    color: #931414;
+    background: var(--stato-errore-bg);
+    border-left-color: var(--stato-errore-testo);
+    color: var(--stato-errore-testo);
   }
 
   .footer-riga {
@@ -213,7 +282,7 @@
     margin-top: 16px;
   }
 
-  /* --- storico messaggi: due viste, rotolo verticale e lista orizzontale --- */
+  /* --- storico messaggi: rotolo, lista e rappresentazione binaria --- */
   .storico {
     width: 100%;
     max-width: 440px;
@@ -252,7 +321,7 @@
   .toggle-btn.attivo {
     background: var(--ink);
     border-color: var(--ink);
-    color: #fff;
+    color: var(--card);
   }
 
   .storico-vuoto {
@@ -372,6 +441,269 @@
 
   .voce-like.attivo { color: var(--red); }
 
+  /* Mosaico continuo: 16 colonne sono due byte UTF-8 per riga. */
+  .voce-binaria {
+    background: var(--card);
+    border: 1px dashed var(--line);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .binario-griglia {
+    display: grid;
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    align-content: start;
+    width: 100%;
+    margin: 14px 0;
+  }
+
+  .binario-byte {
+    display: contents;
+  }
+
+  /* Griglia bianco/rosso: colori fissi del "codice binario" dell'installazione,
+     indipendenti dal tema chiaro/scuro del sito (come nella pagina con la
+     telecamera dedicata). */
+  .binario-bit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    background: #fff;
+    color: #14181F;
+    font-size: clamp(11px, 4.5vw, 20px);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .binario-bit.uno {
+    background: var(--red);
+    color: #fff;
+  }
+
+  .voce-binaria .binario-griglia {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .binario-info, .binario-legenda {
+    font-size: 10px;
+    color: var(--ink-soft);
+  }
+
+  .binario-legenda { margin-bottom: 12px; }
+
+  .binario-anteprima {
+    margin: 0 0 20px;
+    padding: 17px 16px 15px;
+    border: 1px dashed var(--line);
+    background: var(--card);
+  }
+
+  .binario-anteprima[hidden] { display: none; }
+
+  .binario-anteprima .binario-griglia {
+    aspect-ratio: 1;
+    overflow-y: auto;
+    margin: 12px 0;
+    scrollbar-color: var(--line) transparent;
+  }
+
+  .binario-anteprima-titolo {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 1px;
+  }
+
+  .binario-anteprima .binario-info {
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+  }
+
+  .binario-testo summary {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--red);
+    cursor: pointer;
+  }
+
+  .binario-testo p {
+    margin: 8px 0 0;
+    font-size: 13px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .esperienza-camera {
+    width: 100%;
+    max-width: 880px;
+    margin: 48px auto 0;
+    padding: 0 8px;
+  }
+
+  .camera-intestazione { margin: 22px 0; }
+
+  .camera-intestazione[hidden] { display: none; }
+
+  .camera-titolo {
+    margin: 0 0 12px;
+    color: var(--red);
+    font: 14px/1.6 'Press Start 2P', monospace;
+  }
+
+  .camera-intro {
+    margin: 0;
+    max-width: 620px;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+
+  .telecamera-btn {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 20px 24px;
+    border: 1px solid var(--line);
+    background: var(--ink);
+    color: var(--card);
+    text-align: left;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+  }
+
+  .telecamera-btn:hover { background: var(--red); color: #fff; }
+  .telecamera-btn:disabled { opacity: 0.55; cursor: wait; }
+
+  .telecamera-btn-numero {
+    flex: 0 0 auto;
+    border: 1px solid currentColor;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .telecamera-btn-copy { flex: 1; min-width: 0; }
+
+  .telecamera-btn-titolo {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .telecamera-btn-descrizione {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    line-height: 1.5;
+    opacity: 0.76;
+  }
+
+  .telecamera-btn-freccia { font-size: 20px; line-height: 1; }
+
+  @media (max-width: 430px) {
+    .telecamera-btn { gap: 12px; padding: 16px; }
+    .telecamera-btn-titolo { font-size: 12px; }
+    .telecamera-btn-descrizione { font-size: 10px; }
+  }
+
+  .telecamera-pannello[hidden] { display: none; }
+
+  .telecamera-pannello {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-top: 0;
+  }
+
+  .telecamera-stadio {
+    display: grid;
+    gap: 18px;
+    padding: 18px;
+    background: #201A17;
+  }
+
+  @media (min-width: 700px) {
+    .telecamera-stadio { grid-template-columns: 1fr 1fr; gap: 22px; padding: 22px; }
+  }
+
+  .telecamera-vista-titolo {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .telecamera-vista-titolo span:last-child { color: #e6aca6; }
+
+  .telecamera-griglia {
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    margin: 0;
+    background: #fff;
+  }
+
+  .telecamera-griglia .binario-bit { font-size: clamp(11px, 4.5vw, 20px); }
+
+  .telecamera-video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    margin: 0;
+    background: #352d29;
+  }
+
+  .telecamera-video.ribaltata { transform: scaleX(-1); }
+
+  .telecamera-orientamento {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font: 700 10px 'Space Mono', monospace;
+    cursor: pointer;
+  }
+
+  .telecamera-comandi { padding: 18px; }
+
+  .telecamera-comandi #statoTelecamera {
+    margin-bottom: 18px;
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    font-size: 11px;
+  }
+
+  .telecamera-controlli {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 20px;
+  }
+
+  .telecamera-soglia {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 200px;
+    font-size: 11px;
+  }
+
+  .telecamera-soglia input { flex: 1; accent-color: var(--red); }
+
+  .telecamera-orientamento:hover {
+    border-color: var(--red);
+    color: var(--red-dark);
+  }
+
   .torna-su {
     position: fixed;
     bottom: 22px;
@@ -380,7 +712,7 @@
     height: 46px;
     border-radius: 50%;
     background: var(--ink);
-    color: #fff;
+    color: var(--card);
     border: none;
     font-size: 18px;
     line-height: 1;
@@ -400,7 +732,7 @@
     top: 18px;
     right: 18px;
     background: var(--ink);
-    color: #fff;
+    color: var(--card);
     padding: 9px 13px;
     text-align: center;
     box-shadow: 0 6px 16px rgba(32,20,14,0.25);
@@ -431,13 +763,17 @@
     font-family: 'Space Mono', monospace;
     font-size: 15px;
     font-weight: 700;
-    color: #fff;
+    color: var(--card);
   }
 </style>
 </head>
 <body>
+  <button class="interruttore-tema" id="interruttoreTema" aria-label="Cambia tema chiaro/scuro">
+    <svg class="icona-sole" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <svg class="icona-luna" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
   <div class="pagina">
-    <div class="eyebrow">IL MONDO A ROTOLI</div>
+    <h1 class="eyebrow">IL MONDO A ROTOLI</h1>
     <p class="concept">
         Condividi una pratica per evitare che il mondo vada a rotoli.
 
@@ -460,6 +796,11 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
       <div class="prossimo-label">SCRIVI IL TUO PROSSIMO PROMPT:</div>
       <textarea id="testo" maxlength="100" placeholder="Scrivi qui il tuo messaggio..."></textarea>
       <div class="contatore" id="contatore">0/100</div>
+      <div class="binario-anteprima" id="anteprimaBinaria" hidden>
+        <div class="binario-anteprima-titolo">IL TUO MESSAGGIO / BINARIO</div>
+        <div class="binario-griglia" id="grigliaAnteprima" role="img"></div>
+        <div class="binario-info" id="infoAnteprima"></div>
+      </div>
       <button id="invia">Stampa</button>
       <div id="status" class="status"></div>
     </div>
@@ -467,11 +808,47 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
     </div>
   </div>
 
+  <section class="esperienza-camera" aria-labelledby="titoloCamera">
+    <button class="telecamera-btn" id="attivaTelecamera" type="button" aria-expanded="false" aria-controls="pannelloTelecamera">
+      <span class="telecamera-btn-numero" aria-hidden="true">01</span>
+      <span class="telecamera-btn-copy">
+        <span class="telecamera-btn-titolo" id="etichettaCamera">Guarda il codice binario</span>
+        <span class="telecamera-btn-descrizione">i messaggi diventano bit, in diretta dalla telecamera</span>
+      </span>
+      <span class="telecamera-btn-freccia" aria-hidden="true">→</span>
+    </button>
+    <div class="camera-intestazione" id="introduzioneCamera" hidden>
+      <h2 class="camera-titolo" id="titoloCamera">UTOPIA 01</h2>
+      <p class="camera-intro">La traduzione in bit dell'immagine. Gli stessi bit sono la traduzione dei pensieri lasciati da chi è passato da qui prima di te.</p>
+    </div>
+    <div class="telecamera-pannello" id="pannelloTelecamera" hidden>
+      <div class="telecamera-stadio">
+        <div>
+          <div class="telecamera-vista-titolo"><span>01 / RIPRESA</span><span>DAL VIVO</span></div>
+          <video class="telecamera-video ribaltata" id="videoTelecamera" autoplay muted playsinline></video>
+        </div>
+        <div>
+          <div class="telecamera-vista-titolo"><span>02 / TRADUZIONE</span><span>16 × 16</span></div>
+          <div class="binario-griglia telecamera-griglia" id="grigliaTelecamera" role="img" aria-label="Sagoma dalla telecamera, tradotta in bit reali dei messaggi"></div>
+        </div>
+      </div>
+      <div class="telecamera-comandi">
+        <p id="statoTelecamera" aria-live="polite">IN ATTESA DELLA TELECAMERA</p>
+        <div class="telecamera-controlli">
+          <label class="telecamera-soglia">SENSIBILITÀ <input id="sogliaTelecamera" type="range" min="40" max="220" value="130" aria-label="Soglia tra zone chiare e scure"></label>
+          <button class="telecamera-orientamento" id="orientamentoTelecamera" type="button">↔ CAMBIA ORIENTAMENTO</button>
+        </div>
+      </div>
+      <canvas id="canvasTelecamera" width="16" height="16" hidden></canvas>
+    </div>
+  </section>
+
   <div class="storico">
     <div class="storico-titolo">MESSAGGI PRECEDENTI</div>
     <div class="storico-toggle">
       <button class="toggle-btn" id="toggleRotolo" data-vista="rotolo">ROTOLO</button>
       <button class="toggle-btn attivo" id="toggleLista" data-vista="lista">LISTA</button>
+      <button class="toggle-btn" id="toggleBinario" data-vista="binario">BINARIO</button>
     </div>
 
     <div class="storico-vista" id="vistaRotolo" hidden>
@@ -482,6 +859,11 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
 
     <div class="storico-vista" id="vistaLista">
       <div id="storicoListaBox"></div>
+    </div>
+
+    <div class="storico-vista" id="vistaBinario" hidden>
+      <div class="binario-legenda">0 = bianco · 1 = rosso · 8 bit per byte UTF-8</div>
+      <div id="storicoBinario"></div>
     </div>
   </div>
 
@@ -495,6 +877,78 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
   <script>
     const API_URL = './api';
 
+    // --- flusso di bit reale per la griglia della telecamera: le cifre non
+    // sono generate dalla luminosità, sono i bit veri dei messaggi scritti
+    // dalle persone. La luminosità decide solo il colore di ogni casella. ---
+    const BIT_DI_ESEMPIO = // usato solo finché non arriva il primo messaggio vero
+      Array.from(new TextEncoder().encode('il mondo a rotoli'))
+        .map(b => b.toString(2).padStart(8, '0')).join('');
+    let flussoBit = BIT_DI_ESEMPIO;
+    let scartoGlobale = 0;
+    setInterval(() => { scartoGlobale++; }, 200);
+
+    function testoInBit(testo) {
+      return Array.from(new TextEncoder().encode(testo))
+        .map(b => b.toString(2).padStart(8, '0')).join('');
+    }
+
+    async function aggiornaFlussoBit() {
+      try {
+        const risposta = await fetch(`${API_URL}/history.php?limit=30&offset=0`);
+        if (!risposta.ok) return;
+        const dati = await risposta.json();
+        const messaggi = dati.messaggi || [];
+        if (messaggi.length > 0) {
+          flussoBit = messaggi.map(m => testoInBit(m.text)).join('00000000');
+        }
+      } catch (errore) {
+        // Se l'hosting non risponde, restiamo sul flusso di esempio
+      }
+    }
+
+    aggiornaFlussoBit();
+    setInterval(aggiornaFlussoBit, 5000);
+
+    function cifraPerCella(indiceCella) {
+      return flussoBit[(indiceCella + scartoGlobale) % flussoBit.length];
+    }
+
+    // --- interruttore chiaro/scuro (stessa logica delle altre pagine: di
+    // default segue il telefono, la scelta esplicita viene ricordata) ---
+    const CHIAVE_TEMA = 'mondo_a_rotoli_tema';
+    const interruttoreTema = document.getElementById('interruttoreTema');
+    const iconaSole = interruttoreTema.querySelector('.icona-sole');
+    const iconaLuna = interruttoreTema.querySelector('.icona-luna');
+
+    function temaEffettivo() {
+      const esplicito = document.documentElement.dataset.tema;
+      if (esplicito === 'giorno' || esplicito === 'notte') return esplicito;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'notte' : 'giorno';
+    }
+
+    function aggiornaIconaTema() {
+      const attuale = temaEffettivo();
+      iconaSole.hidden = attuale !== 'giorno';
+      iconaLuna.hidden = attuale !== 'notte';
+    }
+
+    try {
+      const salvato = localStorage.getItem(CHIAVE_TEMA);
+      if (salvato === 'giorno' || salvato === 'notte') {
+        document.documentElement.dataset.tema = salvato;
+      }
+    } catch (errore) {}
+
+    aggiornaIconaTema();
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', aggiornaIconaTema);
+
+    interruttoreTema.addEventListener('click', () => {
+      const nuovo = temaEffettivo() === 'notte' ? 'giorno' : 'notte';
+      document.documentElement.dataset.tema = nuovo;
+      try { localStorage.setItem(CHIAVE_TEMA, nuovo); } catch (errore) {}
+      aggiornaIconaTema();
+    });
+
     const textarea = document.getElementById('testo');
     const bottone = document.getElementById('invia');
     const status = document.getElementById('status');
@@ -502,29 +956,45 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
     const ultimoTesto = document.getElementById('ultimoTesto');
     const ultimoQuando = document.getElementById('ultimoQuando');
     const contatore = document.getElementById('contatore');
+    const anteprimaBinaria = document.getElementById('anteprimaBinaria');
+    const grigliaAnteprima = document.getElementById('grigliaAnteprima');
+    const infoAnteprima = document.getElementById('infoAnteprima');
+    const attivaTelecamera = document.getElementById('attivaTelecamera');
+    const etichettaCamera = document.getElementById('etichettaCamera');
+    const introduzioneCamera = document.getElementById('introduzioneCamera');
+    const pannelloTelecamera = document.getElementById('pannelloTelecamera');
+    const grigliaTelecamera = document.getElementById('grigliaTelecamera');
+    const videoTelecamera = document.getElementById('videoTelecamera');
+    const orientamentoTelecamera = document.getElementById('orientamentoTelecamera');
+    const sogliaTelecamera = document.getElementById('sogliaTelecamera');
+    const statoTelecamera = document.getElementById('statoTelecamera');
+    const canvasTelecamera = document.getElementById('canvasTelecamera');
     const storicoRotolo = document.getElementById('storicoRotolo');
     const storicoListaBox = document.getElementById('storicoListaBox');
+    const storicoBinario = document.getElementById('storicoBinario');
     const toggleRotolo = document.getElementById('toggleRotolo');
     const toggleLista = document.getElementById('toggleLista');
+    const toggleBinario = document.getElementById('toggleBinario');
     const vistaRotolo = document.getElementById('vistaRotolo');
     const vistaLista = document.getElementById('vistaLista');
+    const vistaBinario = document.getElementById('vistaBinario');
     const contametri = document.getElementById('contametri');
     const contametriValore = document.getElementById('contametriValore');
 
-    toggleRotolo.addEventListener('click', () => {
-      vistaRotolo.hidden = false;
-      vistaLista.hidden = true;
-      toggleRotolo.classList.add('attivo');
-      toggleLista.classList.remove('attivo');
-      aggiornaContametri();
-    });
+    const viste = {
+      rotolo: [vistaRotolo, toggleRotolo],
+      lista: [vistaLista, toggleLista],
+      binario: [vistaBinario, toggleBinario]
+    };
 
-    toggleLista.addEventListener('click', () => {
-      vistaRotolo.hidden = true;
-      vistaLista.hidden = false;
-      toggleLista.classList.add('attivo');
-      toggleRotolo.classList.remove('attivo');
-      aggiornaContametri();
+    Object.entries(viste).forEach(([nome, [, pulsante]]) => {
+      pulsante.addEventListener('click', () => {
+        Object.entries(viste).forEach(([vista, [contenuto, bottoneVista]]) => {
+          contenuto.hidden = vista !== nome;
+          bottoneVista.classList.toggle('attivo', vista === nome);
+        });
+        aggiornaContametri();
+      });
     });
 
     // Altezza reale di un carattere sul rotolo fisico: FONT_SIZE=165 in
@@ -621,6 +1091,16 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
       const n = textarea.value.length;
       contatore.textContent = `${n}/100`;
       contatore.classList.toggle('limite', n >= 100);
+      const testo = textarea.value.trim();
+      anteprimaBinaria.hidden = !testo;
+      if (testo) {
+        const byte = creaGrigliaBinaria(testo, grigliaAnteprima);
+        grigliaAnteprima.setAttribute('aria-label', `Anteprima binaria UTF-8 di ${byte.length} byte: ${Array.from(byte, valore => valore.toString(2).padStart(8, '0')).join(' ')}`);
+        infoAnteprima.textContent = `${byte.length * 8} BIT  ·  ${byte.length} BYTE UTF-8  ·  0 BIANCO / 1 ROSSO`;
+      } else {
+        grigliaAnteprima.replaceChildren();
+        grigliaAnteprima.removeAttribute('aria-label');
+      }
     }
 
     textarea.addEventListener('input', aggiornaContatore);
@@ -709,7 +1189,146 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
       return `https://wa.me/?text=${encodeURIComponent(messaggioCondiviso)}`;
     }
 
-    // Crea entrambe le rappresentazioni dello stesso messaggio (rotolo + lista),
+    function creaGrigliaDaByte(byte, griglia) {
+      griglia.replaceChildren();
+      for (const valore of byte) {
+        const gruppo = document.createElement('div');
+        gruppo.className = 'binario-byte';
+        for (let bit = 7; bit >= 0; bit--) {
+          const cella = document.createElement('span');
+          const cifra = (valore >> bit) & 1;
+          cella.className = 'binario-bit' + (cifra ? ' uno' : '');
+          cella.textContent = cifra;
+          gruppo.appendChild(cella);
+        }
+        griglia.appendChild(gruppo);
+      }
+      return byte;
+    }
+
+    function creaGrigliaBinaria(testo, griglia) {
+      return creaGrigliaDaByte(new TextEncoder().encode(testo), griglia);
+    }
+
+    // --- telecamera: la sagoma (colore di ogni casella) viene dalla
+    // luminosità dell'inquadratura; la CIFRA mostrata viene invece dal
+    // flusso di bit reale dei messaggi (cifraPerCella, sopra) — le due cose
+    // sono indipendenti apposta. ---
+    const contestoTelecamera = canvasTelecamera.getContext('2d', { willReadFrequently: true });
+    const celleTelecamera = Array.from({ length: 256 }, () => {
+      const cella = document.createElement('span');
+      cella.className = 'binario-bit';
+      cella.textContent = '0';
+      grigliaTelecamera.appendChild(cella);
+      return cella;
+    });
+    let flussoTelecamera = null;
+    let ultimoFrameTelecamera = 0;
+    let ribaltaTelecamera = true;
+
+    orientamentoTelecamera.addEventListener('click', () => {
+      ribaltaTelecamera = !ribaltaTelecamera;
+      videoTelecamera.classList.toggle('ribaltata', ribaltaTelecamera);
+    });
+
+    function fermaTelecamera() {
+      flussoTelecamera?.getTracks().forEach(traccia => traccia.stop());
+      flussoTelecamera = null;
+      videoTelecamera.srcObject = null;
+      pannelloTelecamera.hidden = true;
+      introduzioneCamera.hidden = true;
+      attivaTelecamera.setAttribute('aria-expanded', 'false');
+      statoTelecamera.textContent = 'IN ATTESA DELLA TELECAMERA';
+      etichettaCamera.textContent = 'Guarda il codice binario';
+    }
+
+    function aggiornaTelecamera(tempo) {
+      if (!flussoTelecamera) return;
+      if (tempo - ultimoFrameTelecamera >= 120 && videoTelecamera.readyState >= 2) {
+        ultimoFrameTelecamera = tempo;
+        const larghezza = videoTelecamera.videoWidth;
+        const altezza = videoTelecamera.videoHeight;
+        const lato = Math.min(larghezza, altezza);
+        contestoTelecamera.save();
+        if (ribaltaTelecamera) {
+          contestoTelecamera.translate(16, 0);
+          contestoTelecamera.scale(-1, 1);
+        }
+        contestoTelecamera.drawImage(videoTelecamera, (larghezza - lato) / 2, (altezza - lato) / 2, lato, lato, 0, 0, 16, 16);
+        contestoTelecamera.restore();
+        const pixel = contestoTelecamera.getImageData(0, 0, 16, 16).data;
+        const soglia = Number(sogliaTelecamera.value);
+        for (let i = 0; i < 256; i++) {
+          const luce = 0.2126 * pixel[i * 4] + 0.7152 * pixel[i * 4 + 1] + 0.0722 * pixel[i * 4 + 2];
+          celleTelecamera[i].classList.toggle('uno', luce < soglia);
+          celleTelecamera[i].textContent = cifraPerCella(i);
+        }
+        statoTelecamera.textContent = 'IN DIRETTA';
+      }
+      if (flussoTelecamera) requestAnimationFrame(aggiornaTelecamera);
+    }
+
+    attivaTelecamera.addEventListener('click', async () => {
+      if (flussoTelecamera) {
+        fermaTelecamera();
+        return;
+      }
+      attivaTelecamera.disabled = true;
+      try {
+        const flusso = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        flussoTelecamera = flusso;
+        videoTelecamera.srcObject = flusso;
+        await videoTelecamera.play();
+        pannelloTelecamera.hidden = false;
+        introduzioneCamera.hidden = false;
+        attivaTelecamera.setAttribute('aria-expanded', 'true');
+        etichettaCamera.textContent = 'Chiudi la telecamera';
+        ultimoFrameTelecamera = 0;
+        requestAnimationFrame(aggiornaTelecamera);
+      } catch (errore) {
+        fermaTelecamera();
+        mostraStatus('Telecamera non disponibile: controlla il permesso nel browser e usa localhost o HTTPS.', 'error');
+      } finally {
+        attivaTelecamera.disabled = false;
+      }
+    });
+
+    window.addEventListener('pagehide', fermaTelecamera);
+
+    function creaVoceBinaria(msg) {
+      const scheda = document.createElement('article');
+      scheda.className = 'voce-binaria';
+
+      const intestazione = document.createElement('div');
+      intestazione.className = 'voce-label';
+      const etichetta = document.createElement('span');
+      etichetta.textContent = 'PROMPT:';
+      const quando = document.createElement('span');
+      quando.className = 'voce-quando';
+      quando.textContent = tempoFa(msg.created_at);
+      intestazione.append(etichetta, quando);
+
+      const griglia = document.createElement('div');
+      griglia.className = 'binario-griglia';
+      griglia.setAttribute('role', 'img');
+      const byte = creaGrigliaBinaria(msg.text, griglia);
+      griglia.setAttribute('aria-label', `Rappresentazione binaria UTF-8 di ${byte.length} byte; usa Mostra testo per leggere il messaggio`);
+
+      const info = document.createElement('div');
+      info.className = 'binario-info';
+      info.textContent = `${byte.length * 8} BIT · ${byte.length} BYTE UTF-8`;
+      const dettagli = document.createElement('details');
+      dettagli.className = 'binario-testo';
+      const mostra = document.createElement('summary');
+      mostra.textContent = 'MOSTRA TESTO';
+      const testo = document.createElement('p');
+      testo.textContent = msg.text;
+      dettagli.append(mostra, testo);
+      scheda.append(intestazione, griglia, info, dettagli);
+      return scheda;
+    }
+
+    // Crea le tre rappresentazioni dello stesso messaggio (rotolo, lista e binario),
     // collegate allo stesso like: un doppio click su una delle due aggiorna anche l'altra.
     function creaVoceMessaggio(msg) {
       const likeIniziali = msg.likes || 0;
@@ -765,7 +1384,7 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
       likeVerticale.addEventListener('click', alClickCuore);
       likeOrizzontale.addEventListener('click', alClickCuore);
 
-      return { verticale: wrapVerticale, orizzontale: voceOrizzontale };
+      return { verticale: wrapVerticale, orizzontale: voceOrizzontale, binaria: creaVoceBinaria(msg) };
     }
 
     let offsetStorico = 0;
@@ -787,6 +1406,7 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
         if (offsetStorico === 0) {
           storicoRotolo.innerHTML = '';
           storicoListaBox.innerHTML = '';
+          storicoBinario.replaceChildren();
           const primo = messaggi[0];
           if (primo) {
             ultimoTesto.textContent = primo.text;
@@ -795,6 +1415,7 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
           } else {
             storicoRotolo.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
             storicoListaBox.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
+            storicoBinario.innerHTML = '<div class="storico-vuoto">Nessun messaggio ancora.</div>';
           }
         }
 
@@ -802,6 +1423,7 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
           const voce = creaVoceMessaggio(m);
           storicoRotolo.appendChild(voce.verticale);
           storicoListaBox.appendChild(voce.orizzontale);
+          storicoBinario.appendChild(voce.binaria);
         });
 
         offsetStorico += messaggi.length;
@@ -880,12 +1502,14 @@ Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazi
 
         storicoRotolo.querySelector('.storico-vuoto')?.remove();
         storicoListaBox.querySelector('.storico-vuoto')?.remove();
+        storicoBinario.querySelector('.storico-vuoto')?.remove();
 
         // Appena inviato il messaggio è ancora "pending" (non stampato):
         // il like sarà disponibile solo dopo che risulterà "delivered".
         const voce = creaVoceMessaggio({ id: dati.id, text: testo, created_at: new Date().toISOString(), likes: 0 });
         storicoRotolo.prepend(voce.verticale);
         storicoListaBox.prepend(voce.orizzontale);
+        storicoBinario.prepend(voce.binaria);
 
         ricalcolaMetriRotolo();
         aggiornaContametri();
