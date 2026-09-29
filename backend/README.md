@@ -50,9 +50,22 @@ python3 poller.py
 ```
 
 Se la stampa fallisce con un errore relativo ai permessi USB (es.
-`USBError: [Errno 13] Access denied`), serve una regola udev che dia
-all'utente `pi` accesso al dispositivo della stampante (vendor/product ID
-definiti in `printer.py`, `Usb(0x0416, 0x5011, ...)`).
+`USBError: [Errno 13] Access denied`) pur con `lsusb` che mostra il
+device (`0416:5011`, lo stesso vendor/product ID usato in `printer.py`,
+`Usb(0x0416, 0x5011, ...)`), serve una regola udev che dia all'utente
+`pi` accesso al dispositivo:
+
+```bash
+sudo tee /etc/udev/rules.d/99-escpos-printer.rules <<'EOF'
+SUBSYSTEM=="usb", ATTR{idVendor}=="0416", ATTR{idProduct}=="5011", MODE="0666"
+EOF
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
+
+La regola si applica solo ai device creati dopo il reload: scollega e
+ricollega il cavo USB della stampante (o riavvia il Pi) prima di
+riprovare.
 
 ## Esecuzione in produzione (systemd)
 
