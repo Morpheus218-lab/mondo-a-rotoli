@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Il Mondo a Rotoli — scrivi il prossimo prompt</title>
+<title>Futuri Possibili — scrivi il prossimo prompt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -64,7 +64,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 72px 16px 32px;
+    padding: 72px 16px calc(84px + env(safe-area-inset-bottom));
     background: var(--paper);
     background-image:
       radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0);
@@ -104,16 +104,26 @@
   .interruttore-tema svg[hidden] { display: none; }
   .interruttore-tema[hidden] { display: none; }
 
+  /* Le due righe del titolo sono scalate ciascuna per riempire tutta la
+     larghezza disponibile (come nel riferimento grafico), non con
+     un'unica dimensione: "FUTURI" (6 lettere) è quindi più grande di
+     "POSSIBILI" (9 lettere). Font sostanzialmente monospaziato
+     (1 carattere ≈ 1em): le formule sono calibrate via misurazione
+     diretta così nessuna delle due viene mai tagliata, dai telefoni
+     più stretti fino al contenitore di 520px. */
   .eyebrow {
     font-family: 'Press Start 2P', monospace;
-    font-size: clamp(30px, 11vw, 84px);
     line-height: 1.2;
     letter-spacing: 0.5px;
     color: var(--red);
     text-align: center;
-    text-wrap: balance;
     margin: 4px 0 22px;
   }
+
+  .eyebrow-riga { display: block; }
+
+  .eyebrow-riga-1 { font-size: clamp(40px, calc(15.9vw - 5px), 80px); }
+  .eyebrow-riga-2 { font-size: clamp(26px, calc(10.5vw - 3px), 51px); }
 
   .concept {
     font-size: 13.5px;
@@ -299,28 +309,40 @@
     margin-bottom: 16px;
   }
 
+  /* Menù a portata di dito: barra fissa in fondo allo schermo, sempre
+     raggiungibile col pollice, indipendentemente da dove si è scrollato. */
   .storico-toggle {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 15;
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 18px;
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 20px rgba(32,20,14,0.14);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .toggle-btn {
+    flex: 1;
     font-family: 'Space Mono', monospace;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.5px;
-    padding: 7px 14px;
-    border: 1px solid var(--line);
+    padding: 16px 8px;
+    border: none;
+    border-right: 1px solid var(--line);
     background: var(--card);
     color: var(--ink-soft);
     cursor: pointer;
+    text-align: center;
   }
+
+  .toggle-btn:last-child { border-right: none; }
 
   .toggle-btn.attivo {
     background: var(--ink);
-    border-color: var(--ink);
     color: var(--card);
   }
 
@@ -706,7 +728,7 @@
 
   .torna-su {
     position: fixed;
-    bottom: 22px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
     right: 22px;
     width: 46px;
     height: 46px;
@@ -773,11 +795,11 @@
     <svg class="icona-luna" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
   </button>
   <div class="pagina">
-    <h1 class="eyebrow">IL MONDO A ROTOLI</h1>
+    <h1 class="eyebrow"><span class="eyebrow-riga eyebrow-riga-1">FUTURI</span><span class="eyebrow-riga eyebrow-riga-2">POSSIBILI</span></h1>
     <p class="concept">
-        Condividi una pratica per evitare che il mondo vada a rotoli.
+        Condividi una pratica per disinnescare un futuro che sembra già scritto.
 
-Quello che scrivi qui attraversa la rete e arriva nel nostro studio a Casalnuovo di Napoli, dove viene immediatamente stampato.
+Quello che scrivi qui attraversa la rete e arriva simultaneamente al Teatro San Ferdinando, al Teatro Mercadante e nel nostro laboratorio all'Accademia di Belle Arti di Napoli.
 
 Le distanze si annullano: un piccolo atto di entanglement tra te, noi e lo spazio.
 
