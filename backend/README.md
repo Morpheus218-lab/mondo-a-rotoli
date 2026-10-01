@@ -116,6 +116,14 @@ configura `.env` con lo stesso `API_BASE_URL` (e un `PRINTER_ID` diverso
 per distinguerlo nei log), avvia il servizio. Il primo avvio non stampa
 nulla di già esistente, come descritto sopra.
 
+Se invece stai **aggiornando un deployment già esistente** (hosting e Pi
+già in produzione con la versione precedente, basata su
+`claim.php`/`ack.php`) e non solo aggiungendo un nuovo Pi, segui l'ordine
+di rollout descritto in `../hosting/README.md` (sezione "Migrazione:
+passaggio alla stampa fan-out su più stampanti"): i Pi vanno aggiornati
+*prima* dell'hosting, e la SQL di sblocco va eseguita solo *dopo* che
+tutti i Pi hanno completato il primo avvio.
+
 ## Stampa fallita: ritentata automaticamente, nessuno sblocco manuale
 
 Se la stampa di un messaggio fallisce (es. stampante scollegata), quel
@@ -123,6 +131,31 @@ messaggio non viene registrato come stampato: resta "nuovo" e viene
 ritentato al ciclo successivo (ogni 5s), insieme a tutti i messaggi
 successivi arrivati nel frattempo. Non serve nessuno sblocco manuale —
 diversamente da come funzionava con `claim.php`/`ack.php`.
+
+**Limite noto: scrittura del file di stato fallita dopo una stampa
+riuscita.** Se la stampa va a buon fine ma la scrittura successiva nel
+file di stato fallisce (es. scheda SD rimontata in sola lettura, disco
+pieno), quel messaggio non risulta mai "visto": verrà ristampato a ogni
+ciclo (ogni 5s) finché il problema al filesystem non viene risolto. È un
+compromesso accettato: l'alternativa sarebbe reintrodurre un tracciamento
+dello stato a due fasi, esattamente la complessità che questo redesign
+voleva eliminare. In pratica, un errore di scrittura persistente si nota
+subito (stampe ripetute dello stesso messaggio) ed è un problema di
+filesystem da risolvere sul Pi, non un bug del poller.
+
+**Via di fuga per un "messaggio avvelenato"**: se un messaggio specifico
+fallisce sempre alla stampa per qualche motivo legato al suo contenuto
+(e quindi blocca la coda, impedendo la stampa dei messaggi successivi
+nello stesso ciclo), puoi forzarne manualmente la registrazione come già
+visto senza stamparlo, aggiungendo a mano una riga JSON con il suo `id`
+al file di stato:
+
+```bash
+echo '{"id": 42}' >> stampati.jsonl
+```
+
+Al ciclo successivo il poller lo troverà già tra gli id visti e lo
+salterà, lasciando proseguire la stampa dei messaggi successivi.
 
 ## Limite di `history.php`: 100 messaggi per chiamata
 

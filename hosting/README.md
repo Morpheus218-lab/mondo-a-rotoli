@@ -78,21 +78,32 @@ inserisce direttamente con `status='delivered'`, e ogni Raspberry Pi
 stampante recupera e stampa tutti i messaggi in autonomia (vedi
 `../backend/README.md`).
 
-Se il sito era già in produzione con la versione precedente, potrebbero
-esserci righe rimaste bloccate in `pending` o `printing` da prima del
-deploy di questo cambio. **Dopo** aver aggiornato e fatto ripartire
-*tutti* i Raspberry Pi stampanti con il nuovo `poller.py` (ognuno fa un
-primo avvio "silenzioso" che non stampa nulla di già esistente, vedi
-`../backend/README.md`), sblocca quelle righe una volta sola:
+Se il sito era già in produzione con la versione precedente, l'ordine di
+rollout è vincolante e va seguito esattamente in questa sequenza:
 
-```sql
-UPDATE messaggi SET status = 'delivered' WHERE status IN ('pending', 'printing');
-```
+1. **Per primo**, su *ogni* Raspberry Pi stampante: aggiorna il codice e
+   fai ripartire il servizio con il nuovo `poller.py`, e lascia che
+   ciascuno completi il proprio primo avvio "silenzioso" (non stampa
+   nulla di già esistente, vedi `../backend/README.md`). Durante questa
+   fase nessun Pi stampa (la stampa è di fatto in pausa per tutti): va
+   bene così, nessun messaggio va perso, si accumulano soltanto in attesa
+   che anche l'hosting venga aggiornato.
+2. **Solo dopo** che *tutti* i Pi hanno completato il primo avvio, esegui
+   il deploy dell'hosting (il nuovo `message.php`, la rimozione di
+   `claim.php`/`ack.php`).
+3. **Solo dopo** il deploy dell'hosting, sblocca una volta sola le righe
+   eventualmente rimaste bloccate in `pending` o `printing` da prima del
+   deploy:
 
-Farlo **prima** che tutti i Pi abbiano completato il primo avvio farebbe
-assorbire silenziosamente quei messaggi nella baseline di qualcuno di
-loro, che quindi non li stamperebbe mai (restano comunque visibili
-online, essendo `delivered`).
+   ```sql
+   UPDATE messaggi SET status = 'delivered' WHERE status IN ('pending', 'printing');
+   ```
+
+Non invertire l'ordine: aggiornare l'hosting (passo 2) o eseguire la SQL
+(passo 3) **prima** che tutti i Pi abbiano completato il primo avvio del
+passo 1 farebbe assorbire silenziosamente quei messaggi nella baseline di
+qualcuno di loro, che quindi non li stamperebbe mai (restano comunque
+visibili online, essendo `delivered`).
 
 ## Checklist di test manuale end-to-end
 
