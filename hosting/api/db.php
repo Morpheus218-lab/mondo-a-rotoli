@@ -45,19 +45,6 @@ function get_db(): PDO
     }
 }
 
-function require_api_key(): void
-{
-    $config = get_config();
-    $chiave_fornita = $_SERVER['HTTP_X_API_KEY'] ?? '';
-
-    if (!hash_equals($config['api_key'], $chiave_fornita)) {
-        http_response_code(401);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Non autorizzato']);
-        exit;
-    }
-}
-
 function utc_now_mysql(): string
 {
     return (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');

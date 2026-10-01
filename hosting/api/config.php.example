@@ -8,8 +8,6 @@ return [
     'db_name' => 'nome_database',
     'db_user' => 'utente_database',
     'db_pass' => 'password_database',
-    // Genera una stringa lunga e casuale, es: php -r "echo bin2hex(random_bytes(32));"
-    'api_key' => 'genera-una-chiave-lunga-e-casuale-qui',
     'rate_limit_max_messaggi' => 5,
     'rate_limit_finestra_minuti' => 2,
     'rate_limit_max_like' => 30,

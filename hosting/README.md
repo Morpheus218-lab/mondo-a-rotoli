@@ -3,45 +3,39 @@
 Frontend statico (`frontend/index.html`, copiato qui in fase di deploy) e
 backend PHP + MySQL, pensati per essere caricati sullo stesso hosting
 condiviso (es. `mondoarotoli.cuoredinapoli.net`). Vedi la spec completa in
-`../docs/superpowers/specs/2026-09-11-hosting-php-polling-design.md`.
+`../docs/superpowers/specs/2026-09-11-hosting-php-polling-design.md` e,
+per il fan-out su più stampanti,
+`../docs/superpowers/specs/2026-10-01-stampa-fan-out-multistampante-design.md`.
 
 ## Deploy
 
 1. Crea un database MySQL sull'hosting ed esegui `schema.sql` (via
    phpMyAdmin o client `mysql`).
 2. Copia `api/config.php.example` in `api/config.php` sull'hosting e
-   compilalo con le credenziali reali del database e una `api_key` generata
-   con `php -r "echo bin2hex(random_bytes(32));"`. Questo file non va mai
+   compilalo con le credenziali reali del database. Questo file non va mai
    committato.
 3. Carica la cartella `api/` (incluso il tuo `config.php`, escluso
    `config.php.example` se vuoi) sull'hosting.
 4. Carica `frontend/index.html` nella root del sito.
-5. Comunica la stessa `api_key` al Raspberry Pi (vedi `../backend/README.md`).
 
 ## Endpoint pubblici
 
 - `POST /api/message.php` — body `{"text": "..."}` → `202`/`400`/`413`/`429`.
+  Il messaggio viene inserito con `status='delivered'` e compare
+  **subito** nello storico pubblico — non esiste più uno stato intermedio
+  "in stampa": ogni Raspberry Pi stampante lo recupera e lo stampa per
+  conto proprio (vedi `../backend/README.md`), indipendentemente dagli
+  altri.
 - `GET /api/history.php?limit=&offset=` → `200 {"messaggi": [...]}` (ogni
   messaggio include anche `likes`, il numero di "mi piace" ricevuti).
 - `POST /api/like.php` — body `{"id": ...}` → `200`/`400`/`404`/`429`.
   - `200 {"likes": <nuovo_totale>}`: like registrato.
   - `400`: campo `id` mancante o non intero.
-  - `404`: messaggio non trovato o non ancora in stato `delivered` (non
-    ha senso mettere like a un messaggio non ancora stampato).
+  - `404`: messaggio non trovato.
   - `429`: troppi like dallo stesso IP nella finestra di tempo
     configurata (`rate_limit_max_like`/`rate_limit_finestra_like_minuti`
     in `config.php`, di default 30 ogni 2 minuti). Solo aggiunta: non
     esiste un modo per togliere un like già dato.
-
-## Endpoint privati (richiedono header `X-Api-Key`)
-
-- `POST /api/claim.php` → `200 {"id", "text"}` o `204` se non c'è nulla da
-  stampare, `401` senza chiave valida.
-- `POST /api/ack.php` — body `{"id": ...}` → `200`/`400`/`401`/`404`.
-  - `200`: messaggio confermato e spostato a `delivered`.
-  - `400`: campo `id` mancante o non intero.
-  - `401`: header `X-Api-Key` mancante o invalido.
-  - `404`: messaggio non trovato o non in stato `printing`.
 
 ## Migrazione: aggiungere i "mi piace" a un database già in produzione
 
@@ -75,31 +69,48 @@ già sull'hosting) le due nuove righe `rate_limit_max_like` e
 `rate_limit_finestra_like_minuti` — vedi `config.php.example` per i
 valori di default.
 
+## Migrazione: passaggio alla stampa fan-out su più stampanti
+
+Prima di questo cambio, `claim.php`/`ack.php` facevano sì che **una sola**
+stampante si prendesse in carico ogni messaggio (stato intermedio
+`printing`). Quegli endpoint sono stati rimossi: `message.php` ora
+inserisce direttamente con `status='delivered'`, e ogni Raspberry Pi
+stampante recupera e stampa tutti i messaggi in autonomia (vedi
+`../backend/README.md`).
+
+Se il sito era già in produzione con la versione precedente, l'ordine di
+rollout è vincolante e va seguito esattamente in questa sequenza:
+
+1. **Per primo**, su *ogni* Raspberry Pi stampante: aggiorna il codice e
+   fai ripartire il servizio con il nuovo `poller.py`, e lascia che
+   ciascuno completi il proprio primo avvio "silenzioso" (non stampa
+   nulla di già esistente, vedi `../backend/README.md`). Durante questa
+   fase nessun Pi stampa (la stampa è di fatto in pausa per tutti): va
+   bene così, nessun messaggio va perso, si accumulano soltanto in attesa
+   che anche l'hosting venga aggiornato.
+2. **Solo dopo** che *tutti* i Pi hanno completato il primo avvio, esegui
+   il deploy dell'hosting (il nuovo `message.php`, la rimozione di
+   `claim.php`/`ack.php`).
+3. **Solo dopo** il deploy dell'hosting, sblocca una volta sola le righe
+   eventualmente rimaste bloccate in `pending` o `printing` da prima del
+   deploy:
+
+   ```sql
+   UPDATE messaggi SET status = 'delivered' WHERE status IN ('pending', 'printing');
+   ```
+
+Non invertire l'ordine: aggiornare l'hosting (passo 2) o eseguire la SQL
+(passo 3) **prima** che tutti i Pi abbiano completato il primo avvio del
+passo 1 farebbe assorbire silenziosamente quei messaggi nella baseline di
+qualcuno di loro, che quindi non li stamperebbe mai (restano comunque
+visibili online, essendo `delivered`).
+
 ## Checklist di test manuale end-to-end
 
 Dopo il deploy, verifica nell'ordine (sostituendo l'URL con quello reale):
 
 1. `curl -i -X POST https://TUO_DOMINIO/api/message.php -H "Content-Type: application/json" -d '{"text": "test"}'` → `202`.
-2. `curl -i -X POST https://TUO_DOMINIO/api/claim.php -H "X-Api-Key: TUA_CHIAVE"` → `200` con il messaggio appena inviato.
-3. `curl -i -X POST https://TUO_DOMINIO/api/ack.php -H "X-Api-Key: TUA_CHIAVE" -H "Content-Type: application/json" -d '{"id": ID_RESTITUITO_SOPRA}'` → `200 {"ok": true}`.
-4. `curl -i "https://TUO_DOMINIO/api/history.php"` → `200` con il messaggio ora presente.
-5. Ripeti il punto 1 altre 5 volte di fila dallo stesso IP (il messaggio del punto 1 conta già nella finestra): la quinta ripetizione (sesta chiamata in totale) deve rispondere `429`.
-6. `curl -i -X POST https://TUO_DOMINIO/api/claim.php` (nessun header) → `401`.
-7. `curl -i -X POST https://TUO_DOMINIO/api/ack.php -H "X-Api-Key: sbagliata" -d '{"id": 1}'` → `401`.
-8. `curl -i -X POST https://TUO_DOMINIO/api/like.php -H "Content-Type: application/json" -d '{"id": ID_DEL_PUNTO_3}'` → `200 {"likes": 1}` (usa l'id del messaggio confermato al punto 3, ormai `delivered`).
-9. `curl -i -X POST https://TUO_DOMINIO/api/like.php -H "Content-Type: application/json" -d '{"id": 999999}'` → `404` (id inesistente o non ancora stampato).
-
-## Sblocco manuale di un messaggio bloccato in `printing`
-
-Se il Raspberry Pi si interrompe tra un claim riuscito e la conferma (ack),
-il messaggio resta in stato `printing` **per scelta**: non c'è uno sblocco
-automatico, per evitare il rischio di stampare due volte lo stesso
-messaggio. Se sei sicuro che il messaggio NON sia stato effettivamente
-stampato, sbloccalo a mano:
-
-```sql
-UPDATE messaggi SET status = 'pending' WHERE id = ...;
-```
-
-Esegui questo comando solo dopo aver verificato fisicamente che la stampa
-non sia avvenuta.
+2. `curl -i "https://TUO_DOMINIO/api/history.php"` → `200`, il messaggio del punto 1 è già presente (nessun passaggio intermedio da aspettare).
+3. Ripeti il punto 1 altre 5 volte di fila dallo stesso IP (il messaggio del punto 1 conta già nella finestra): la quinta ripetizione (sesta chiamata in totale) deve rispondere `429`.
+4. `curl -i -X POST https://TUO_DOMINIO/api/like.php -H "Content-Type: application/json" -d '{"id": ID_DEL_PUNTO_1}'` → `200 {"likes": 1}`.
+5. `curl -i -X POST https://TUO_DOMINIO/api/like.php -H "Content-Type: application/json" -d '{"id": 999999}'` → `404` (id inesistente).

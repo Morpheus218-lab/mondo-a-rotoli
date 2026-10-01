@@ -9,4 +9,5 @@ backend/.env
 bridge/.env
 bridge/*.jsonl
 ledwall/*.jsonl
+backend/*.jsonl
 scratch/

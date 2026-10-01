@@ -1,14 +1,22 @@
 # backend
 
-Client Python che gira sul Raspberry Pi Zero: ogni 5 secondi interroga il
-backend PHP dell'hosting (`hosting/api/claim.php`) per un nuovo messaggio,
-lo stampa sulla stampante USB collegata e conferma la stampa
-(`hosting/api/ack.php`). Non espone alcun server HTTP: il Pi non deve mai
+Client Python che gira su ogni Raspberry Pi con una stampante
+collegata: ogni 5 secondi interroga lo storico pubblico dell'hosting
+(`hosting/api/history.php`), stampa i messaggi che non ha ancora
+stampato sulla stampante USB collegata, e tiene traccia in locale di
+cosa ha già stampato. Non espone alcun server HTTP: il Pi non deve mai
 essere raggiungibile da internet.
 
-Sostituisce il precedente server Flask + SQLite locale. Vedi la spec
-completa in
-`../docs/superpowers/specs/2026-09-11-hosting-php-polling-design.md`.
+**Ogni Pi stampante è indipendente dalle altre**: se ci sono più Pi in
+luoghi diversi, ciascuno stampa autonomamente tutti i messaggi nuovi,
+senza competere con gli altri per lo stesso messaggio. Vedi la spec in
+`../docs/superpowers/specs/2026-10-01-stampa-fan-out-multistampante-design.md`.
+
+**Al primo avvio un Pi non stampa nulla di già esistente**: registra lo
+storico trovato in quel momento come "già visto" senza stamparlo, e da
+lì in poi stampa solo ciò che arriva dopo. Questo vale anche per un Pi
+già esistente quando riceve questa nuova versione del codice (il file
+di stato locale, descritto sotto, non esiste ancora per lui).
 
 ## Configurazione
 
@@ -17,8 +25,23 @@ Crea un file `.env` (non committato, vedi `.gitignore`) nella cartella
 
 ```
 API_BASE_URL=https://TUO_DOMINIO/api
-API_KEY=la_stessa_chiave_configurata_in_hosting/api/config.php
+STATO_FILE=/home/pi/mondo-a-rotoli/backend/stampati.jsonl
+PRINTER_ID=napoli
 ```
+
+`STATO_FILE` è opzionale (default `stampati.jsonl`, risolto rispetto
+alla working directory del processo — con il servizio systemd incluso
+questa è la root del repository, non `backend/`: per questo conviene
+usare un percorso assoluto invece di lasciare il default). `PRINTER_ID`
+è opzionale e serve solo per distinguere questo Pi nei log quando ne
+guardi più di uno insieme — non influisce su nessuna logica.
+
+## Formato del file di stato
+
+Una riga JSON per messaggio stampato, con gli stessi campi restituiti
+da `history.php` (`id`, `text`, `created_at`, `status`, `likes`). Serve
+sia da elenco di cosa è già stato stampato (dedup) sia da archivio
+locale di quel Pi.
 
 ## Sviluppo locale
 
@@ -86,9 +109,60 @@ e il file `.env` si trovi in `/home/pi/mondo-a-rotoli/backend/.env`;
 adattare i percorsi nel file `.service` se diversi. Log del servizio:
 `journalctl -u mondo-a-rotoli -f`.
 
-## Messaggi bloccati in stato "printing"
+## Aggiungere un nuovo Pi stampante
 
-Se il poller si interrompe tra un claim riuscito e la conferma, un
-messaggio può restare bloccato in stato `printing` sull'hosting. Questo è
-voluto (evita il rischio di doppie stampe): vedi
-`../hosting/README.md` per la procedura di sblocco manuale.
+Ripeti questa stessa procedura su ogni Raspberry Pi: clona il repo,
+configura `.env` con lo stesso `API_BASE_URL` (e un `PRINTER_ID` diverso
+per distinguerlo nei log), avvia il servizio. Il primo avvio non stampa
+nulla di già esistente, come descritto sopra.
+
+Se invece stai **aggiornando un deployment già esistente** (hosting e Pi
+già in produzione con la versione precedente, basata su
+`claim.php`/`ack.php`) e non solo aggiungendo un nuovo Pi, segui l'ordine
+di rollout descritto in `../hosting/README.md` (sezione "Migrazione:
+passaggio alla stampa fan-out su più stampanti"): i Pi vanno aggiornati
+*prima* dell'hosting, e la SQL di sblocco va eseguita solo *dopo* che
+tutti i Pi hanno completato il primo avvio.
+
+## Stampa fallita: ritentata automaticamente, nessuno sblocco manuale
+
+Se la stampa di un messaggio fallisce (es. stampante scollegata), quel
+messaggio non viene registrato come stampato: resta "nuovo" e viene
+ritentato al ciclo successivo (ogni 5s), insieme a tutti i messaggi
+successivi arrivati nel frattempo. Non serve nessuno sblocco manuale —
+diversamente da come funzionava con `claim.php`/`ack.php`.
+
+**Limite noto: scrittura del file di stato fallita dopo una stampa
+riuscita.** Se la stampa va a buon fine ma la scrittura successiva nel
+file di stato fallisce (es. scheda SD rimontata in sola lettura, disco
+pieno), quel messaggio non risulta mai "visto": verrà ristampato a ogni
+ciclo (ogni 5s) finché il problema al filesystem non viene risolto. È un
+compromesso accettato: l'alternativa sarebbe reintrodurre un tracciamento
+dello stato a due fasi, esattamente la complessità che questo redesign
+voleva eliminare. In pratica, un errore di scrittura persistente si nota
+subito (stampe ripetute dello stesso messaggio) ed è un problema di
+filesystem da risolvere sul Pi, non un bug del poller.
+
+**Via di fuga per un "messaggio avvelenato"**: se un messaggio specifico
+fallisce sempre alla stampa per qualche motivo legato al suo contenuto
+(e quindi blocca la coda, impedendo la stampa dei messaggi successivi
+nello stesso ciclo), puoi forzarne manualmente la registrazione come già
+visto senza stamparlo, aggiungendo a mano una riga JSON con il suo `id`
+al file di stato:
+
+```bash
+echo '{"id": 42}' >> stampati.jsonl
+```
+
+Al ciclo successivo il poller lo troverà già tra gli id visti e lo
+salterà, lasciando proseguire la stampa dei messaggi successivi.
+
+## Limite di `history.php`: 100 messaggi per chiamata
+
+`history.php` restituisce al massimo 100 messaggi per chiamata (stesso
+limite già noto per `bridge/`, vedi `bridge/README.md`): se un Pi resta
+spento o irraggiungibile abbastanza a lungo da accumulare più di 100
+messaggi nuovi nel frattempo, quelli più vecchi della finestra dei 100
+più recenti non vengono recuperati retroattivamente da quel Pi — restano
+comunque stampati dagli altri Pi che non hanno perso il giro, e visibili
+online.

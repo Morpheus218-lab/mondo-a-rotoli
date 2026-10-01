@@ -60,7 +60,7 @@ if ($conteggio >= $config['rate_limit_max_messaggi']) {
 $created_at_db = utc_now_mysql();
 
 $insert_stmt = $db->prepare(
-    'INSERT INTO messaggi (text, created_at, status, ip) VALUES (:text, :created_at, "pending", :ip)'
+    'INSERT INTO messaggi (text, created_at, status, ip) VALUES (:text, :created_at, "delivered", :ip)'
 );
 $insert_stmt->execute(['text' => $testo, 'created_at' => $created_at_db, 'ip' => $ip]);
 

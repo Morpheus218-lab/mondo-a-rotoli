@@ -15,44 +15,26 @@ class RispostaFinta:
             raise RuntimeError(f"HTTP {self.status_code}")
 
 
-def test_reclama_messaggio_ritorna_none_se_204(monkeypatch):
-    monkeypatch.setattr(api_client.requests, "post", lambda *a, **k: RispostaFinta(204))
+def test_recupera_storico_ritorna_la_lista_messaggi(monkeypatch):
+    messaggi = [{"id": 2, "text": "ciao"}, {"id": 1, "text": "salve"}]
+    monkeypatch.setattr(
+        api_client.requests, "get", lambda *a, **k: RispostaFinta(200, {"messaggi": messaggi})
+    )
 
-    risultato = api_client.reclama_messaggio("http://esempio", "chiave")
+    risultato = api_client.recupera_storico("http://esempio")
 
-    assert risultato is None
-
-
-def test_reclama_messaggio_ritorna_messaggio_se_200(monkeypatch):
-    corpo = {"id": 1, "text": "ciao"}
-    monkeypatch.setattr(api_client.requests, "post", lambda *a, **k: RispostaFinta(200, corpo))
-
-    risultato = api_client.reclama_messaggio("http://esempio", "chiave")
-
-    assert risultato == corpo
+    assert risultato == messaggi
 
 
-def test_reclama_messaggio_passa_la_api_key_nell_header(monkeypatch):
+def test_recupera_storico_passa_il_limit_nei_parametri(monkeypatch):
     chiamate = []
 
-    def post_finto(url, headers=None, timeout=None, **kwargs):
-        chiamate.append((url, headers))
-        return RispostaFinta(204)
+    def get_finto(url, params=None, timeout=None, **kwargs):
+        chiamate.append((url, params))
+        return RispostaFinta(200, {"messaggi": []})
 
-    monkeypatch.setattr(api_client.requests, "post", post_finto)
+    monkeypatch.setattr(api_client.requests, "get", get_finto)
 
-    api_client.reclama_messaggio("http://esempio", "segreta")
+    api_client.recupera_storico("http://esempio", limit=100)
 
-    assert chiamate[0][1]["X-Api-Key"] == "segreta"
-
-
-def test_conferma_messaggio_ritorna_true_se_200(monkeypatch):
-    monkeypatch.setattr(api_client.requests, "post", lambda *a, **k: RispostaFinta(200))
-
-    assert api_client.conferma_messaggio("http://esempio", "chiave", 1) is True
-
-
-def test_conferma_messaggio_ritorna_false_se_404(monkeypatch):
-    monkeypatch.setattr(api_client.requests, "post", lambda *a, **k: RispostaFinta(404))
-
-    assert api_client.conferma_messaggio("http://esempio", "chiave", 1) is False
+    assert chiamate[0][1]["limit"] == 100
