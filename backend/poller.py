@@ -53,21 +53,25 @@ def process_one_ciclo(base_url, stato_path, stampante):
         return
 
     primo_avvio = not os.path.exists(stato_path)
+
+    if primo_avvio:
+        # Crea il file di stato subito, anche se non c'e' ancora nulla da
+        # "battezzare": altrimenti, con uno storico vuoto al primo giro, il
+        # primo messaggio mai inviato verrebbe assorbito silenziosamente
+        # nella baseline del giro successivo invece di essere stampato.
+        open(stato_path, "a", encoding="utf-8").close()
+        for messaggio in messaggi:
+            _registra_visto(stato_path, messaggio)
+        if messaggi:
+            logger.info(
+                "Primo avvio: %s messaggi gia' presenti segnati come visti senza stamparli",
+                len(messaggi),
+            )
+        return
+
     id_gia_visti = _leggi_id_gia_visti(stato_path)
     nuovi = [m for m in messaggi if m["id"] not in id_gia_visti]
     nuovi.sort(key=lambda m: m["id"])
-
-    if not nuovi:
-        return
-
-    if primo_avvio:
-        for messaggio in nuovi:
-            _registra_visto(stato_path, messaggio)
-        logger.info(
-            "Primo avvio: %s messaggi gia' presenti segnati come visti senza stamparli",
-            len(nuovi),
-        )
-        return
 
     for messaggio in nuovi:
         riuscito = printer_module.stampa_messaggio(stampante, messaggio["text"])

@@ -54,6 +54,32 @@ def test_primo_avvio_non_stampa_nulla_e_segna_tutto_come_visto(tmp_path, monkeyp
     assert leggi_id_nel_file(stato_path) == {1, 2}
 
 
+def test_primo_avvio_con_storico_vuoto_crea_comunque_il_file_di_stato(tmp_path, monkeypatch):
+    stato_path = tmp_path / "stampati.jsonl"
+    storico_per_chiamata = [[], [{"id": 1, "text": "primo messaggio vero"}]]
+    monkeypatch.setattr(
+        poller.api_client, "recupera_storico", lambda *a, **k: storico_per_chiamata.pop(0)
+    )
+    stampante = StampanteFinta()
+
+    # Primo ciclo: storico vuoto (nessun messaggio mai inviato). Il file di
+    # stato deve essere creato comunque, altrimenti al ciclo successivo
+    # primo_avvio risulterebbe ancora True e il primo messaggio vero
+    # verrebbe assorbito nella baseline invece di essere stampato.
+    poller.process_one_ciclo("http://esempio", str(stato_path), stampante)
+
+    assert stampante.testi_stampati == []
+    assert stato_path.exists()
+    assert leggi_id_nel_file(stato_path) == set()
+
+    # Secondo ciclo: ora arriva il primo messaggio vero. Non essendo piu'
+    # il primo avvio, deve essere stampato normalmente.
+    poller.process_one_ciclo("http://esempio", str(stato_path), stampante)
+
+    assert len(stampante.testi_stampati) == 1
+    assert leggi_id_nel_file(stato_path) == {1}
+
+
 def test_dopo_il_primo_avvio_stampa_solo_i_messaggi_nuovi(tmp_path, monkeypatch):
     stato_path = tmp_path / "stampati.jsonl"
     stato_path.write_text(json.dumps({"id": 1, "text": "salve"}) + "\n", encoding="utf-8")
