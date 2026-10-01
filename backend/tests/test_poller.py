@@ -31,7 +31,15 @@ class StampanteFinta:
 def leggi_id_nel_file(path):
     if not path.exists():
         return set()
-    return {json.loads(riga)["id"] for riga in path.read_text(encoding="utf-8").splitlines() if riga}
+    id_trovati = set()
+    for riga in path.read_text(encoding="utf-8").splitlines():
+        if not riga:
+            continue
+        try:
+            id_trovati.add(json.loads(riga)["id"])
+        except (json.JSONDecodeError, KeyError):
+            continue
+    return id_trovati
 
 
 def test_primo_avvio_non_stampa_nulla_e_segna_tutto_come_visto(tmp_path, monkeypatch):
@@ -124,3 +132,19 @@ def test_gestisce_errore_di_rete_durante_il_recupero_dello_storico(tmp_path, mon
 
     assert stampante.testi_stampati == []
     assert not stato_path.exists()
+
+
+def test_ignora_una_riga_corrotta_senza_bloccarsi(tmp_path, monkeypatch):
+    stato_path = tmp_path / "stampati.jsonl"
+    stato_path.write_text(
+        json.dumps({"id": 1, "text": "a"}) + "\n" + "questo non e' json valido\n",
+        encoding="utf-8",
+    )
+    storico = [{"id": 2, "text": "b"}, {"id": 1, "text": "a"}]
+    monkeypatch.setattr(poller.api_client, "recupera_storico", lambda *a, **k: storico)
+    stampante = StampanteFinta()
+
+    poller.process_one_ciclo("http://esempio", str(stato_path), stampante)
+
+    assert len(stampante.testi_stampati) == 1  # id=2 stampato (id=1 gia' visto, riga corrotta ignorata)
+    assert leggi_id_nel_file(stato_path) == {1, 2}
