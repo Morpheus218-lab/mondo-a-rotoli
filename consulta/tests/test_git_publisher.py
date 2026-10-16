@@ -35,6 +35,40 @@ def test_assicura_clone_clona_se_non_esiste(tmp_path):
     assert (clone_dir / ".git").is_dir()
 
 
+def _leggi_config_locale(clone_dir, chiave):
+    risultato = subprocess.run(
+        ["git", "config", "--local", chiave], cwd=str(clone_dir), capture_output=True, text=True
+    )
+    return risultato.stdout.strip()
+
+
+def test_assicura_clone_imposta_identita_locale_su_un_clone_nuovo(tmp_path):
+    remote_url = _crea_remote_bare(tmp_path)
+    clone_dir = tmp_path / "clone"
+
+    git_publisher.assicura_clone(remote_url, str(clone_dir), "Consulta Watcher", "consulta@esempio.it")
+
+    assert _leggi_config_locale(clone_dir, "user.name") == "Consulta Watcher"
+    assert _leggi_config_locale(clone_dir, "user.email") == "consulta@esempio.it"
+    # Non deve toccare la config globale della macchina.
+    globale = subprocess.run(
+        ["git", "config", "--global", "--get", "user.name"], capture_output=True, text=True
+    )
+    assert "Consulta Watcher" not in globale.stdout
+
+
+def test_assicura_clone_imposta_identita_locale_anche_su_un_clone_gia_esistente(tmp_path):
+    remote_url = _crea_remote_bare(tmp_path)
+    clone_dir = tmp_path / "clone"
+    clone_dir.mkdir()
+    _clona_e_configura(remote_url, clone_dir)  # identita' diversa gia' impostata
+
+    git_publisher.assicura_clone(remote_url, str(clone_dir), "Consulta Watcher", "consulta@esempio.it")
+
+    assert _leggi_config_locale(clone_dir, "user.name") == "Consulta Watcher"
+    assert _leggi_config_locale(clone_dir, "user.email") == "consulta@esempio.it"
+
+
 def test_assicura_clone_non_fa_nulla_se_gia_clonato(tmp_path):
     remote_url = _crea_remote_bare(tmp_path)
     clone_dir = tmp_path / "clone"

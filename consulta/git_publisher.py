@@ -13,16 +13,33 @@ def _esegui(comando, cwd):
     return subprocess.run(comando, cwd=cwd, check=True, capture_output=True, text=True)
 
 
-def assicura_clone(remote_url, clone_dir):
+def _imposta_identita_locale(clone_dir, nome_commit, email_commit):
+    """Imposta user.name/user.email solo nella config locale di
+    clone_dir (file .git/config), senza toccare la config globale della
+    macchina: necessaria per poter fare commit automatici senza
+    dipendere da un'identita' git impostata altrove per altri scopi."""
+    _esegui(["git", "config", "user.name", nome_commit], cwd=clone_dir)
+    _esegui(["git", "config", "user.email", email_commit], cwd=clone_dir)
+
+
+def assicura_clone(remote_url, clone_dir, nome_commit=None, email_commit=None):
     """Clona remote_url in clone_dir se non esiste ancora (richiede che
     l'autenticazione verso remote_url, es. una chiave SSH gia' autorizzata,
-    funzioni senza richiedere input interattivo)."""
+    funzioni senza richiedere input interattivo). Se nome_commit e
+    email_commit sono forniti, imposta l'identita' per i commit solo
+    nella config locale del clone, sia su un clone nuovo sia su uno gia'
+    esistente."""
     if os.path.isdir(os.path.join(clone_dir, ".git")):
+        if nome_commit and email_commit:
+            _imposta_identita_locale(clone_dir, nome_commit, email_commit)
         return
 
     cartella_padre = os.path.dirname(os.path.abspath(clone_dir))
     os.makedirs(cartella_padre, exist_ok=True)
     _esegui(["git", "clone", remote_url, clone_dir], cwd=cartella_padre)
+
+    if nome_commit and email_commit:
+        _imposta_identita_locale(clone_dir, nome_commit, email_commit)
 
 
 def pubblica(clone_dir, consulta_path, branch):

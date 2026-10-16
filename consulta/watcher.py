@@ -73,7 +73,8 @@ def process_one_ciclo(base_url, stato_path, consulta_path, ollama_host, modello)
         _registra_taggato(stato_path, messaggio)
 
 
-def _pubblica_se_in_programma(consulta_path, remote_url, clone_dir, branch, ultimo_push, intervallo):
+def _pubblica_se_in_programma(consulta_path, remote_url, clone_dir, branch, ultimo_push, intervallo,
+                               nome_commit=None, email_commit=None):
     """Se remote_url e' configurato e sono passati almeno intervallo
     secondi dall'ultimo tentativo, clona/aggiorna clone_dir e pubblica
     consulta_path sul repo remoto. Ritorna il nuovo valore di
@@ -85,7 +86,7 @@ def _pubblica_se_in_programma(consulta_path, remote_url, clone_dir, branch, ulti
         return ultimo_push
 
     try:
-        git_publisher.assicura_clone(remote_url, clone_dir)
+        git_publisher.assicura_clone(remote_url, clone_dir, nome_commit, email_commit)
         if git_publisher.pubblica(clone_dir, consulta_path, branch):
             logger.info("Consulta.md pubblicato sul repo remoto")
     except Exception:
@@ -95,7 +96,8 @@ def _pubblica_se_in_programma(consulta_path, remote_url, clone_dir, branch, ulti
 
 
 def watcher_loop(base_url, stato_path, consulta_path, ollama_host, modello,
-                  remote_url=None, clone_dir=None, branch="main", push_intervallo=INTERVALLO_SECONDI):
+                  remote_url=None, clone_dir=None, branch="main", push_intervallo=INTERVALLO_SECONDI,
+                  nome_commit=None, email_commit=None):
     ultimo_push = 0
     while True:
         try:
@@ -104,7 +106,8 @@ def watcher_loop(base_url, stato_path, consulta_path, ollama_host, modello,
             logger.exception("Errore inatteso nel ciclo di tagging")
 
         ultimo_push = _pubblica_se_in_programma(
-            consulta_path, remote_url, clone_dir, branch, ultimo_push, push_intervallo
+            consulta_path, remote_url, clone_dir, branch, ultimo_push, push_intervallo,
+            nome_commit, email_commit,
         )
 
         time.sleep(INTERVALLO_SECONDI)
@@ -126,6 +129,8 @@ if __name__ == "__main__":
     )
     branch = os.environ.get("CONSULTA_REMOTE_BRANCH", "main")
     push_intervallo = int(os.environ.get("CONSULTA_REMOTE_PUSH_INTERVALLO_SECONDI", INTERVALLO_SECONDI))
+    nome_commit = os.environ.get("CONSULTA_GIT_USER_NAME", "Consulta Watcher")
+    email_commit = os.environ.get("CONSULTA_GIT_USER_EMAIL", "consulta-watcher@localhost")
 
     if not remote_url:
         logger.info("CONSULTA_REMOTE_URL non configurata: pubblicazione su repo remoto disattivata")
@@ -133,4 +138,5 @@ if __name__ == "__main__":
     watcher_loop(
         base_url, stato_path, consulta_path, ollama_host, modello,
         remote_url, clone_dir, branch, push_intervallo,
+        nome_commit, email_commit,
     )
