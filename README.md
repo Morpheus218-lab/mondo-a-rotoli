@@ -107,6 +107,7 @@ fase di deploy, cartelle diverse finiscono su macchine diverse.
 | [`backend/`](backend/) | Ogni Raspberry Pi stampante (uno o più, indipendenti tra loro) | `poller.py` (loop principale), `api_client.py` (chiamate HTTP), `printer.py` (stampa), `.env` (config, **non committato**), `mondo-a-rotoli.service` (systemd) |
 | [`bridge/`](bridge/) | Raspberry Pi opzionale, collegato a un MacBook | `fetcher.py` (loop principale), `api_client.py` (chiamate HTTP), `bluetooth_sender.py` (invio via obexftp), `.env` (config, **non committato**), `mondo-a-rotoli-bridge.service` (systemd) |
 | [`ledwall/`](ledwall/) | MacBook opzionale, collegato via Bluetooth | `TextWall.py` (loop principale, scrive sul ledwall via UDP), `messaggi_watcher.py` (legge i file ricevuti), `mostrati.jsonl` (stato/archivio, **non committato**, creato al primo avvio) |
+| [`consulta/`](consulta/) | Macchina opzionale con [Ollama](https://ollama.com/) installato | `watcher.py` (loop principale, ogni 10s), `api_client.py` (chiamate HTTP verso un'installazione "consulta" separata da quella dei messaggi stampati), `tagger.py` (genera i tag via Ollama), `consulta_writer.py` (scrive `Consulta.md`), `.env` (config, **non committato**), `mondo-a-rotoli-consulta.service` (systemd) |
 
 Niente, in questo repo, gira sull'hosting E su un Pi contemporaneamente: ogni
 cartella ha una sola destinazione. `docs/` non va deployato da nessuna
@@ -130,3 +131,7 @@ ciascuna parte:
   opzionale: mostra su un ledwall via UDP sia il testo digitato a mano
   sia i messaggi ricevuti in automatico dal Pi #2. Non necessario per far
   funzionare l'installazione di base.
+- [`consulta/README.md`](consulta/README.md) — macchina opzionale con
+  Ollama: tagga via modello locale i messaggi di un'installazione
+  "consulta" separata e li scrive in `Consulta.md`. Non necessario per
+  far funzionare l'installazione di base.

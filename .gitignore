@@ -10,4 +10,7 @@ bridge/.env
 bridge/*.jsonl
 ledwall/*.jsonl
 backend/*.jsonl
+consulta/.env
+consulta/*.jsonl
+consulta/Consulta.md
 scratch/
