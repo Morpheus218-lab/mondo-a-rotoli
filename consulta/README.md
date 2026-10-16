@@ -13,6 +13,11 @@ A differenza di `backend/poller.py`, al primo avvio `consulta` tagga e
 scrive anche tutto il backlog recuperabile (fino a 100 messaggi), non
 solo quelli arrivati da quel momento in poi.
 
+Opzionalmente, `consulta` puo' anche pubblicare `Consulta.md` su un
+repository git remoto (vedi "Pubblicazione su repo remoto" sotto),
+sostituendo il file con lo stesso nome nella root di quel repo ad ogni
+aggiornamento.
+
 ## Formato di Consulta.md
 
 Un blocco per messaggio, dal piu' recente al meno recente:
@@ -53,6 +58,43 @@ rispetto alla working directory del processo — con il servizio systemd
 incluso questa e' la root del repository, non `consulta/`: per questo
 conviene usare percorsi assoluti in `.env` invece di lasciare i
 default).
+
+## Pubblicazione su repo remoto (opzionale)
+
+Se configurata, ad ogni ciclo `consulta` controlla se sono passati
+almeno `CONSULTA_REMOTE_PUSH_INTERVALLO_SECONDI` secondi dall'ultimo
+tentativo e, in caso affermativo, aggiorna un clone locale del repo
+remoto, ci copia sopra `Consulta.md` e — solo se il contenuto e'
+cambiato — fa commit e push. Se la pubblicazione fallisce (rete,
+autenticazione, conflitto) l'errore viene loggato e si riprova al giro
+successivo, senza bloccare il tagging dei nuovi messaggi.
+
+Aggiungi in `.env`:
+
+```
+CONSULTA_REMOTE_URL=git@host:utente/nome-repo.git
+CONSULTA_REMOTE_BRANCH=main
+CONSULTA_REMOTE_PUSH_INTERVALLO_SECONDI=10
+CONSULTA_REMOTE_CLONE_DIR=/percorso/assoluto/consulta/remote-consulta
+```
+
+Solo `CONSULTA_REMOTE_URL` e' obbligatoria per attivare la
+pubblicazione: se assente, questa parte resta disattivata e `consulta`
+si comporta come senza repo remoto. `CONSULTA_REMOTE_BRANCH` (default
+`main`) e `CONSULTA_REMOTE_PUSH_INTERVALLO_SECONDI` (default 10, in
+secondi) sono opzionali. `CONSULTA_REMOTE_CLONE_DIR` e' opzionale
+(default `consulta/remote-consulta/`, non committato — vedi
+`.gitignore`); il clone viene creato automaticamente al primo giro se
+non esiste ancora.
+
+Perche' il push funzioni senza interazione serve, sulla macchina che fa
+girare `watcher.py`:
+
+- una chiave SSH gia' autorizzata a fare push su `CONSULTA_REMOTE_URL`
+  (es. una deploy key con permessi di scrittura, caricata in un
+  `ssh-agent` attivo per l'utente che esegue il servizio);
+- `git config --global user.name` e `user.email` gia' impostati
+  (servono per creare i commit — `git commit` fallisce senza).
 
 ## Sviluppo locale
 

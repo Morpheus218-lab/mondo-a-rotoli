@@ -6,6 +6,7 @@ import time
 
 import api_client
 import consulta_writer
+import git_publisher
 import tagger
 
 logger = logging.getLogger(__name__)
@@ -72,12 +73,40 @@ def process_one_ciclo(base_url, stato_path, consulta_path, ollama_host, modello)
         _registra_taggato(stato_path, messaggio)
 
 
-def watcher_loop(base_url, stato_path, consulta_path, ollama_host, modello):
+def _pubblica_se_in_programma(consulta_path, remote_url, clone_dir, branch, ultimo_push, intervallo):
+    """Se remote_url e' configurato e sono passati almeno intervallo
+    secondi dall'ultimo tentativo, clona/aggiorna clone_dir e pubblica
+    consulta_path sul repo remoto. Ritorna il nuovo valore di
+    ultimo_push (sempre aggiornato dopo un tentativo, riuscito o no, per
+    non ritentare ad ogni ciclo in caso di errore persistente)."""
+    if not remote_url:
+        return ultimo_push
+    if time.time() - ultimo_push < intervallo:
+        return ultimo_push
+
+    try:
+        git_publisher.assicura_clone(remote_url, clone_dir)
+        if git_publisher.pubblica(clone_dir, consulta_path, branch):
+            logger.info("Consulta.md pubblicato sul repo remoto")
+    except Exception:
+        logger.exception("Errore durante la pubblicazione di Consulta.md sul repo remoto")
+
+    return time.time()
+
+
+def watcher_loop(base_url, stato_path, consulta_path, ollama_host, modello,
+                  remote_url=None, clone_dir=None, branch="main", push_intervallo=INTERVALLO_SECONDI):
+    ultimo_push = 0
     while True:
         try:
             process_one_ciclo(base_url, stato_path, consulta_path, ollama_host, modello)
         except Exception:
             logger.exception("Errore inatteso nel ciclo di tagging")
+
+        ultimo_push = _pubblica_se_in_programma(
+            consulta_path, remote_url, clone_dir, branch, ultimo_push, push_intervallo
+        )
+
         time.sleep(INTERVALLO_SECONDI)
 
 
@@ -90,4 +119,18 @@ if __name__ == "__main__":
     ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
     modello = os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
 
-    watcher_loop(base_url, stato_path, consulta_path, ollama_host, modello)
+    remote_url = os.environ.get("CONSULTA_REMOTE_URL")
+    clone_dir = os.environ.get(
+        "CONSULTA_REMOTE_CLONE_DIR",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "remote-consulta"),
+    )
+    branch = os.environ.get("CONSULTA_REMOTE_BRANCH", "main")
+    push_intervallo = int(os.environ.get("CONSULTA_REMOTE_PUSH_INTERVALLO_SECONDI", INTERVALLO_SECONDI))
+
+    if not remote_url:
+        logger.info("CONSULTA_REMOTE_URL non configurata: pubblicazione su repo remoto disattivata")
+
+    watcher_loop(
+        base_url, stato_path, consulta_path, ollama_host, modello,
+        remote_url, clone_dir, branch, push_intervallo,
+    )

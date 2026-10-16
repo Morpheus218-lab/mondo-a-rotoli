@@ -1,0 +1,45 @@
+# consulta/git_publisher.py
+import logging
+import os
+import shutil
+import subprocess
+
+logger = logging.getLogger(__name__)
+
+NOME_FILE_REMOTO = "Consulta.md"
+
+
+def _esegui(comando, cwd):
+    return subprocess.run(comando, cwd=cwd, check=True, capture_output=True, text=True)
+
+
+def assicura_clone(remote_url, clone_dir):
+    """Clona remote_url in clone_dir se non esiste ancora (richiede che
+    l'autenticazione verso remote_url, es. una chiave SSH gia' autorizzata,
+    funzioni senza richiedere input interattivo)."""
+    if os.path.isdir(os.path.join(clone_dir, ".git")):
+        return
+
+    cartella_padre = os.path.dirname(os.path.abspath(clone_dir))
+    os.makedirs(cartella_padre, exist_ok=True)
+    _esegui(["git", "clone", remote_url, clone_dir], cwd=cartella_padre)
+
+
+def pubblica(clone_dir, consulta_path, branch):
+    """Aggiorna clone_dir dal remoto, copia consulta_path su
+    clone_dir/Consulta.md e, solo se il contenuto e' cambiato rispetto
+    all'ultimo commit, fa commit e push sul branch indicato. Ritorna True
+    se ha pushato, False se non c'era nulla di nuovo da pubblicare."""
+    _esegui(["git", "pull", "--ff-only", "origin", branch], cwd=clone_dir)
+
+    destinazione = os.path.join(clone_dir, NOME_FILE_REMOTO)
+    shutil.copyfile(consulta_path, destinazione)
+
+    stato = _esegui(["git", "status", "--porcelain", "--", NOME_FILE_REMOTO], cwd=clone_dir)
+    if not stato.stdout.strip():
+        return False
+
+    _esegui(["git", "add", "--", NOME_FILE_REMOTO], cwd=clone_dir)
+    _esegui(["git", "commit", "-m", "Aggiorna Consulta.md"], cwd=clone_dir)
+    _esegui(["git", "push", "origin", branch], cwd=clone_dir)
+    return True

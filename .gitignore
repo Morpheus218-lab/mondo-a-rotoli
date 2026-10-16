@@ -13,4 +13,5 @@ backend/*.jsonl
 consulta/.env
 consulta/*.jsonl
 consulta/Consulta.md
+consulta/remote-consulta/
 scratch/

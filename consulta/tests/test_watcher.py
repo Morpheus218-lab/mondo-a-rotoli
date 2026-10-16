@@ -4,6 +4,61 @@ import json
 import watcher
 
 
+def test_pubblica_se_in_programma_non_fa_nulla_senza_remote_url(tmp_path):
+    chiamate = []
+    risultato = watcher._pubblica_se_in_programma(
+        str(tmp_path / "Consulta.md"), None, str(tmp_path / "clone"), "main", 0, 10
+    )
+    assert risultato == 0
+    assert chiamate == []
+
+
+def test_pubblica_se_in_programma_aspetta_l_intervallo(monkeypatch, tmp_path):
+    chiamate = []
+    monkeypatch.setattr(watcher.git_publisher, "assicura_clone", lambda *a, **k: chiamate.append("clone"))
+    monkeypatch.setattr(watcher.git_publisher, "pubblica", lambda *a, **k: chiamate.append("pubblica") or False)
+    monkeypatch.setattr(watcher.time, "time", lambda: 100)
+
+    risultato = watcher._pubblica_se_in_programma(
+        str(tmp_path / "Consulta.md"), "git@esempio:remoto.git", str(tmp_path / "clone"), "main",
+        ultimo_push=95, intervallo=10,
+    )
+
+    assert risultato == 95  # non ancora passato l'intervallo
+    assert chiamate == []
+
+
+def test_pubblica_se_in_programma_pubblica_quando_e_ora(monkeypatch, tmp_path):
+    chiamate = []
+    monkeypatch.setattr(watcher.git_publisher, "assicura_clone", lambda *a, **k: chiamate.append("clone"))
+    monkeypatch.setattr(watcher.git_publisher, "pubblica", lambda *a, **k: chiamate.append("pubblica") or True)
+    monkeypatch.setattr(watcher.time, "time", lambda: 200)
+
+    risultato = watcher._pubblica_se_in_programma(
+        str(tmp_path / "Consulta.md"), "git@esempio:remoto.git", str(tmp_path / "clone"), "main",
+        ultimo_push=95, intervallo=10,
+    )
+
+    assert risultato == 200
+    assert chiamate == ["clone", "pubblica"]
+
+
+def test_pubblica_se_in_programma_aggiorna_ultimo_push_anche_se_fallisce(monkeypatch, tmp_path):
+    def pubblicazione_rotta(*a, **k):
+        raise RuntimeError("push fallito")
+
+    monkeypatch.setattr(watcher.git_publisher, "assicura_clone", lambda *a, **k: None)
+    monkeypatch.setattr(watcher.git_publisher, "pubblica", pubblicazione_rotta)
+    monkeypatch.setattr(watcher.time, "time", lambda: 200)
+
+    risultato = watcher._pubblica_se_in_programma(
+        str(tmp_path / "Consulta.md"), "git@esempio:remoto.git", str(tmp_path / "clone"), "main",
+        ultimo_push=95, intervallo=10,
+    )
+
+    assert risultato == 200  # non deve sollevare, e non deve ritentare subito al prossimo giro
+
+
 def test_primo_avvio_tagga_e_scrive_anche_il_backlog_esistente(tmp_path, monkeypatch):
     stato_path = tmp_path / "taggati.jsonl"
     consulta_path = tmp_path / "Consulta.md"
