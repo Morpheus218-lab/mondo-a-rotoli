@@ -98,6 +98,31 @@ def test_pubblica_fa_commit_e_push_se_il_contenuto_e_cambiato(tmp_path):
     assert (verifica_dir / "Consulta.md").read_text(encoding="utf-8") == "[[saluti]]\nciao mondo\n"
 
 
+def test_pubblica_ritenta_il_push_di_un_commit_locale_rimasto_indietro(tmp_path):
+    # Riproduce il caso di un push fallito a meta' in un giro precedente:
+    # il commit e' gia' avvenuto in locale (es. per un errore di rete sul
+    # solo "git push"), ma il contenuto di Consulta.md non e' cambiato da
+    # allora. pubblica() deve comunque ritentare il push.
+    remote_url = _crea_remote_bare(tmp_path)
+    clone_dir = tmp_path / "clone"
+    clone_dir.mkdir()
+    _clona_e_configura(remote_url, clone_dir)
+
+    (clone_dir / "Consulta.md").write_text("[[saluti]]\nciao mondo\n", encoding="utf-8")
+    _git(["add", "Consulta.md"], cwd=str(clone_dir))
+    _git(["commit", "-m", "Aggiorna Consulta.md"], cwd=str(clone_dir))  # mai pushato
+
+    consulta_path = tmp_path / "Consulta.md"
+    consulta_path.write_text("[[saluti]]\nciao mondo\n", encoding="utf-8")  # stesso contenuto
+
+    pubblicato = git_publisher.pubblica(str(clone_dir), str(consulta_path), "main")
+
+    assert pubblicato is True
+    verifica_dir = tmp_path / "verifica"
+    _git(["clone", remote_url, str(verifica_dir)], cwd=str(tmp_path))
+    assert (verifica_dir / "Consulta.md").read_text(encoding="utf-8") == "[[saluti]]\nciao mondo\n"
+
+
 def test_pubblica_ritorna_false_se_nulla_e_cambiato(tmp_path):
     remote_url = _crea_remote_bare(tmp_path)
     clone_dir = tmp_path / "clone"
